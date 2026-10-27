@@ -126,6 +126,16 @@ function AppCard({ app, onOpen }) {
   const [copied, setCopied] = useState(false);
   const [iconFailed, setIconFailed] = useState(false);
   useEffect(() => { setIconFailed(false); }, [app.iconUrl]);
+  const patches = Array.isArray(app.patches) ? app.patches : [];
+  const previewPatches = patches.slice(0, 2);
+  const sourceCount = new Set(patches.map((patch) => patch.sourceName || patch.bundle).filter(Boolean)).size;
+  const supportedVersions = Array.from(new Set(
+    patches.flatMap((patch) => (patch.apps || [])
+      .filter((target) => target.package === app.packageName)
+      .flatMap((target) => Array.isArray(target.versions) ? target.versions : [])
+      .map((version) => String(version).trim())
+      .filter(Boolean))
+  )).slice(0, 3);
   const copyPackage = async (event) => {
     event.stopPropagation();
     try {
@@ -135,6 +145,9 @@ function AppCard({ app, onOpen }) {
     } catch {
       const input = document.createElement("textarea");
       input.value = app.packageName;
+      input.setAttribute("readonly", "");
+      input.style.position = "fixed";
+      input.style.opacity = "0";
       document.body.appendChild(input);
       input.select();
       document.execCommand("copy");
@@ -149,15 +162,40 @@ function AppCard({ app, onOpen }) {
       <button className="app-card-main" type="button" onClick={() => onOpen(app)} aria-label={"View patches for " + app.name}>
         <div className="app-card-top">
           <Avatar src={!iconFailed ? app.iconUrl : null} name={app.name} className="app-avatar" />
+          <div className="app-card-heading-copy">
+            <h3>{app.name}</h3>
+            <p className="package-line">{app.packageName}</p>
+          </div>
           <span className="card-arrow"><ArrowUpRight size={17} /></span>
         </div>
-        <h3>{app.name}</h3>
-        <p className="package-line">{app.packageName}</p>
-        <p className="app-card-description">Browse community patches and supported versions for this app.</p>
+        <div className="app-card-info">
+          {previewPatches.length > 0 ? (
+            <>
+              <span className="app-card-section-label">AVAILABLE PATCHES</span>
+              <ul className="app-patch-preview">
+                {previewPatches.map((patch) => (
+                  <li key={patch.id || patch.name}>
+                    <span className="app-patch-preview-icon"><Sparkles size={13} /></span>
+                    <span className="app-patch-copy">
+                      <strong>{patch.name || patch.id || "Community patch"}</strong>
+                      {patch.description && <small>{patch.description}</small>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="app-card-description">Open this app to inspect its available patch sources, options, and supported versions.</p>
+          )}
+          {supportedVersions.length > 0 && (
+            <div className="app-version-row"><span>Supported versions</span><strong>{supportedVersions.join(" · ")}</strong></div>
+          )}
+        </div>
       </button>
       <div className="app-card-meta">
         <span className="category-chip">{app.category || "Other"}</span>
-        <span className="patch-count"><Sparkles size={13} /> {app.patchCount || (app.patches || []).length} patches</span>
+        <span className="patch-count"><Sparkles size={13} /> {app.patchCount || patches.length} patches</span>
+        {sourceCount > 0 && <span className="app-source-count"><Boxes size={13} /> {sourceCount} sources</span>}
       </div>
       <div className="app-card-actions">
         <button className="button button-quiet package-copy" type="button" onClick={copyPackage} title="Copy package name">
@@ -177,7 +215,6 @@ function AppCard({ app, onOpen }) {
     </article>
   );
 }
-
 function BundleCard({ bundle, onOpen }) {
   return (
     <article className="bundle-card">

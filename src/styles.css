@@ -778,3 +778,74 @@ button, a, input, select { min-width: 0; }
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+
+/* Focus the search as one surface; never draw a second rectangle around the input. */
+.search-control:focus-within {
+  border-color: #78ad89;
+  box-shadow: 0 0 0 3px #9be9b71c, 0 8px 24px #00000018;
+}
+.search-control .search-input,
+.search-control .search-input:focus,
+.search-control .search-input:focus-visible,
+.search-control input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search-control .search-input {
+  display: block;
+  align-self: stretch;
+  padding: 0;
+  margin: 0;
+  line-height: normal;
+  caret-color: var(--mint);
+}
+.search-control > * { position: relative; z-index: 1; }
+.search-control > svg { pointer-events: none; }
+.search-control kbd { pointer-events: none; }
+
+@keyframes catalog-card-enter {
+  from { opacity: 0; transform: translateY(9px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.app-grid > .app-card,
+.bundle-grid > .bundle-card {
+  animation: catalog-card-enter .24s cubic-bezier(.2,.75,.25,1) both;
+}
+.app-grid > .app-card:nth-child(2n),
+.bundle-grid > .bundle-card:nth-child(2n) { animation-delay: 18ms; }
+.app-grid > .app-card:nth-child(3n),
+.bundle-grid > .bundle-card:nth-child(3n) { animation-delay: 36ms; }
+
+.search-control,
+.filter-controls .select-control {
+  transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.search-control:active,
+.filter-controls .select-control:active {
+  border-color: #52715b;
+}
+.filter-controls .select-control:focus-within {
+  border-color: #78ad89;
+  box-shadow: 0 0 0 3px #9be9b714;
+}
+.filter-controls .select-control select:focus,
+.filter-controls .select-control select:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-grid > .app-card,
+  .bundle-grid > .bundle-card {
+    animation: none !important;
+  }
+  .search-control,
+  .filter-controls .select-control {
+    transition: none !important;
+  }
+}

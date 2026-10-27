@@ -673,7 +673,7 @@ export default function App() {
               <div className="results-summary"><span>{tab === "apps" ? "PATCHABLE APPS" : tab === "bundles" ? "PATCH SOURCES" : "RELEASE NOTES"}</span><div><strong>{(tab === "apps" ? visibleApps.length : tab === "bundles" ? visibleBundles.length : visibleUpdates.length).toLocaleString()}</strong> results <span className="results-divider">·</span> Checked {formatDate(catalog?.fetchedAt || catalog?.generatedAt)}</div></div>
               {tab === "apps" && (
                 visibleApps.length ? <>
-                  <div className="app-grid">{visibleApps.slice(0, pageSize).map((app) => <AppCard key={app.packageName} app={app} onOpen={openApp} />)}</div>
+                  <div className="app-grid" key={`${tab}-${category}-${sort}`}>{visibleApps.slice(0, pageSize).map((app) => <AppCard key={app.packageName} app={app} onOpen={openApp} />)}</div>
                   {visibleApps.length > pageSize && <div className="load-more"><button className="button button-secondary" type="button" onClick={() => setPageSize((value) => value + 24)}>Show more apps <ArrowRight size={14} /></button><span>Showing {Math.min(pageSize, visibleApps.length)} of {visibleApps.length}</span></div>}
                 </> : <EmptyState title="No apps match your search" description="Try another keyword or clear your category filter." onReset={() => { setQuery(""); setCategory("all"); }} />
               )}

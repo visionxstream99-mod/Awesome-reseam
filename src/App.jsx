@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownAZ, ArrowDownUp, ArrowLeft, ArrowRight, ArrowUpRight, BadgeCheck,
   BookOpen, Boxes, Check, ChevronDown, CircleHelp, Clock3, Copy, ExternalLink,
@@ -314,6 +314,44 @@ function Header({ tab, setTab, counts, onHome }) {
         <span className="header-note"><span className="status-dot" /> Community maintained</span>
       </div>
     </header>
+  );
+}
+
+function AnimatedSelect({ icon: Icon, value, onChange, options, label, className = "" }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const selected = options.find((option) => option.value === value) || options[0];
+  useEffect(() => {
+    if (!open) return undefined;
+    const closeOnOutside = (event) => {
+      if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+  return (
+    <div className={"animated-select-wrap " + className} ref={rootRef}>
+      <button type="button" className={"select-control animated-select-trigger" + (open ? " is-open" : "")} aria-label={label} aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
+        <Icon size={15} />
+        <span className="animated-select-value">{selected?.label || label}</span>
+        <ChevronDown size={14} className="animated-select-chevron" />
+      </button>
+      <div className={"animated-select-menu" + (open ? " is-open" : "")} role="listbox" aria-label={label} aria-hidden={!open}>
+        {options.map((option) => (
+          <button type="button" role="option" aria-selected={value === option.value} className={"animated-select-option" + (value === option.value ? " selected" : "")} key={option.value} tabIndex={open ? 0 : -1} onClick={() => { onChange(option.value); setOpen(false); }}>
+            <span>{option.label}</span>
+            {value === option.value && <Check size={15} />}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -666,8 +704,8 @@ export default function App() {
               <div className="catalog-controls">
                 <SearchControl value={query} onChange={setQuery} placeholder={tab === "apps" ? "Search apps or patches…" : tab === "bundles" ? "Search bundles…" : "Search release notes…"} onClear={() => setQuery("")} />
                 <div className="filter-controls">
-                  {tab === "apps" && <label className="select-control"><ListFilter size={15} /><select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter apps by category"><option value="all">All categories</option>{categories.map((item) => <option key={item} value={item}>{item}</option>)}</select><ChevronDown size={14} /></label>}
-                  <label className="select-control"><ArrowDownAZ size={15} /><select value={tab === "news" ? (sort === "oldest" ? "oldest" : "popular") : sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort results">{tab === "news" ? <><option value="popular">Newest releases</option><option value="oldest">Oldest releases</option></> : <><option value="popular">Most patches</option><option value="name">Name A–Z</option><option value="patches-asc">Fewest patches</option></>}</select><ChevronDown size={14} /></label>
+                  {tab === "apps" && <AnimatedSelect icon={ListFilter} label="Filter apps by category" value={category} onChange={setCategory} options={[{ value: "all", label: "All categories" }, ...categories.map((item) => ({ value: item, label: item }))]} />}
+                  <AnimatedSelect icon={ArrowDownAZ} label="Sort results" value={tab === "news" ? (sort === "oldest" ? "oldest" : "popular") : sort} onChange={setSort} options={tab === "news" ? [{ value: "popular", label: "Newest releases" }, { value: "oldest", label: "Oldest releases" }] : [{ value: "popular", label: "Most patches" }, { value: "name", label: "Name A–Z" }, { value: "patches-asc", label: "Fewest patches" }]} />
                 </div>
               </div>
               <div className="results-summary"><span>{tab === "apps" ? "PATCHABLE APPS" : tab === "bundles" ? "PATCH SOURCES" : "RELEASE NOTES"}</span><div><strong>{(tab === "apps" ? visibleApps.length : tab === "bundles" ? visibleBundles.length : visibleUpdates.length).toLocaleString()}</strong> results <span className="results-divider">·</span> Checked {formatDate(catalog?.fetchedAt || catalog?.generatedAt)}</div></div>

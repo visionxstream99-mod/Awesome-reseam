@@ -1,4 +1,4 @@
-const CACHE_NAME = "awesome-reseam-shell-v3";
+const CACHE_NAME = "awesome-reseam-shell-v4";
 const CORE_ASSETS = ["/", "/index.html", "/catalog.json", "/manifest.webmanifest", "/reseam.svg"];
 
 self.addEventListener("install", (event) => {
@@ -23,15 +23,23 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
   if (url.pathname === "/catalog.json") {
-    event.respondWith(
-      fetch(request).then((response) => {
+    event.respondWith((async () => {
+      const cached = await caches.match(request);
+      const update = fetch(request).then((response) => {
         if (response.ok) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
         }
         return response;
-      }).catch(async () => (await caches.match(request)) || Response.error())
-    );
+      }).catch(() => null);
+
+      // Cached snapshot wins immediately; update it quietly for the next visit.
+      if (cached) {
+        event.waitUntil(update);
+        return cached;
+      }
+      return (await update) || Response.error();
+    })());
     return;
   }
 

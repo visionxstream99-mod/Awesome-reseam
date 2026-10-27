@@ -346,6 +346,33 @@ async function buildCatalogOnce() {
     }
   }
 
+  // RJ's community bundle is maintained in its own release repository.
+  // Keep it visible in Awesome Reseam even when the upstream registry has not indexed it yet.
+  const rjSourceUrl = "https://github.com/visionxstream99-mod/RJ-reseam-patches";
+  const rjAddUrl = "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/latest/download/rj-reseam-patches.reseam";
+  const rjPatches = [
+    { id: "app.rj.adm.patches.removeAds", name: "Remove Ads", description: "Removes supported advertising entry points in Advanced Download Manager.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.dv.adm", versions: ["7.6"] }], options: [] },
+    { id: "app.rj.anixart.patches.removeAds", name: "Remove Ads", description: "Community Anixart customization patch.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.anixart.dante", versions: [] }], options: [] },
+    { id: "app.rj.pinterest.patches.removeAdId", name: "Remove advertising ID access", description: "Removes the advertising ID permission/access path.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.pinterest", versions: ["14.42.0"] }], options: [] },
+    { id: "app.rj.pinterest.patches.analyticsOptOut", name: "Opt out of analytics", description: "Disables the optional analytics collection path targeted by this patch.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.pinterest", versions: ["14.42.0"] }], options: [] },
+    { id: "app.rj.pinterest.patches.disablePrivacySandbox", name: "Disable Privacy Sandbox", description: "Disables the targeted Privacy Sandbox integration.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.pinterest", versions: ["14.42.0"] }], options: [] },
+    { id: "app.rj.pinterest.patches.disableGoogleEngage", name: "Disable Google Engage", description: "Disables the targeted Google Engage integration.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.pinterest", versions: ["14.42.0"] }], options: [] }
+  ];
+  const rjBundle = {
+    name: "rj-reseam-patches", author: "RJ", description: "Community Reseam patches for Advanced Download Manager, Anixart and Pinterest.",
+    homepage: rjSourceUrl, url: rjSourceUrl, indexUrl: rjSourceUrl, addUrl: rjAddUrl, version: "latest",
+    updatedAt: fetchedAt, patchCount: rjPatches.length, iconUrl: "https://github.com/visionxstream99-mod.png",
+    isOfficial: false, metadataStatus: "community", patchListAvailable: true, sourceId: "rj-reseam-patches",
+    registryBundleId: null, releaseUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/latest",
+    prerelease: false, releases: [], patches: rjPatches
+  };
+  bundleItems.push(rjBundle);
+  allPatches.push(...rjPatches);
+  for (const patch of rjPatches) {
+    const release = { version: "latest", createdAt: fetchedAt, description: patch.name, prerelease: false, sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl };
+    whatsNew.push(release);
+  }
+
   const appsMap = new Map();
   for (const [packageName, summary] of packageSummaryMap.entries()) {
     appsMap.set(packageName, {

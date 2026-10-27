@@ -160,37 +160,37 @@ function AppCard({ app, onOpen }) {
   return (
     <article className="app-card">
       <button className="app-card-main" type="button" onClick={() => onOpen(app)} aria-label={"View patches for " + app.name}>
-        <div className="app-card-top">
+        <span className="app-card-top">
           <Avatar src={!iconFailed ? app.iconUrl : null} name={app.name} className="app-avatar" />
-          <div className="app-card-heading-copy">
-            <h3>{app.name}</h3>
-            <p className="package-line">{app.packageName}</p>
-          </div>
+          <span className="app-card-heading-copy">
+            <span className="app-card-name">{app.name}</span>
+            <span className="package-line">{app.packageName}</span>
+          </span>
           <span className="card-arrow"><ArrowUpRight size={17} /></span>
-        </div>
-        <div className="app-card-info">
+        </span>
+        <span className="app-card-info">
           {previewPatches.length > 0 ? (
             <>
               <span className="app-card-section-label">AVAILABLE PATCHES</span>
-              <ul className="app-patch-preview">
+              <span className="app-patch-preview">
                 {previewPatches.map((patch) => (
-                  <li key={patch.id || patch.name}>
+                  <span className="app-patch-preview-item" key={patch.id || patch.name}>
                     <span className="app-patch-preview-icon"><Sparkles size={13} /></span>
                     <span className="app-patch-copy">
                       <strong>{patch.name || patch.id || "Community patch"}</strong>
                       {patch.description && <small>{patch.description}</small>}
                     </span>
-                  </li>
+                  </span>
                 ))}
-              </ul>
+              </span>
             </>
           ) : (
-            <p className="app-card-description">Open this app to inspect its available patch sources, options, and supported versions.</p>
+            <span className="app-card-description">Open this app to inspect its available patch sources, options, and supported versions.</span>
           )}
           {supportedVersions.length > 0 && (
-            <div className="app-version-row"><span>Supported versions</span><strong>{supportedVersions.join(" · ")}</strong></div>
+            <span className="app-version-row"><span>Supported versions</span><strong>{supportedVersions.join(" · ")}</strong></span>
           )}
-        </div>
+        </span>
       </button>
       <div className="app-card-meta">
         <span className="category-chip">{app.category || "Other"}</span>

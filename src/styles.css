@@ -503,7 +503,13 @@ button, a, input, select { min-width: 0; }
   .hero-copy h1 { font-size: 29px; }
   .detail-hero { align-items: flex-start; }
   .detail-app-avatar { width: 38px; height: 38px; }
-  .patch-card-summary { grid-template-columns: 22px minmax(0, 1fr) 12px; }
+  .patch-card-summary {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 12px;
+    align-items: start;
+  }
+  .patch-summary-copy { overflow-wrap: anywhere; }
+  .patch-chevron { margin-left: 0; }
   .patch-symbol { width: 22px; height: 22px; }
 }
 

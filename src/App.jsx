@@ -492,9 +492,12 @@ export default function App() {
   const refreshCatalog = useCallback(async () => {
     setRefreshing(true);
     try {
-      const response = await fetch("/catalog.json?refresh=" + Date.now(), { cache: "no-store" });
-      if (!response.ok) throw new Error("Catalog refresh failed");
+      const response = await fetch("/api/catalog?refresh=1", { cache: "no-store" });
+      if (!response.ok) throw new Error("Live catalog refresh failed");
       const next = await response.json();
+      if (!next?.registry?.available || !Array.isArray(next.apps) || !Array.isArray(next.bundles)) {
+        throw new Error("The registry returned an invalid catalog");
+      }
       setCatalog(next);
       setLoadError(false);
     } catch {
@@ -506,13 +509,37 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/catalog.json")
-      .then((response) => {
-        if (!response.ok) throw new Error("Catalog unavailable");
-        return response.json();
-      })
-      .then((data) => { if (!cancelled) setCatalog(data); })
-      .catch(() => { if (!cancelled) { setCatalog(EMPTY_CATALOG); setLoadError(true); } });
+    const loadCatalog = async () => {
+      try {
+        const response = await fetch("/api/catalog", { cache: "no-store" });
+        if (!response.ok) throw new Error("Live catalog unavailable");
+        const data = await response.json();
+        if (!data?.registry?.available || !Array.isArray(data.apps) || !Array.isArray(data.bundles)) {
+          throw new Error("Live catalog response was invalid");
+        }
+        if (!cancelled) {
+          setCatalog(data);
+          setLoadError(false);
+        }
+        return;
+      } catch {
+        try {
+          const response = await fetch("/catalog.json", { cache: "no-store" });
+          if (!response.ok) throw new Error("Saved catalog unavailable");
+          const data = await response.json();
+          if (!cancelled) {
+            setCatalog(data);
+            setLoadError(true);
+          }
+        } catch {
+          if (!cancelled) {
+            setCatalog(EMPTY_CATALOG);
+            setLoadError(true);
+          }
+        }
+      }
+    };
+    void loadCatalog();
     return () => { cancelled = true; };
   }, []);
 
@@ -567,7 +594,10 @@ export default function App() {
   }, [catalog]);
 
   const categories = useMemo(() => Array.from(new Set((catalog?.apps || []).map((app) => app.category || "Other"))).sort((a, b) => a.localeCompare(b)), [catalog]);
-  const totalPatches = useMemo(() => (catalog?.bundles || []).reduce((sum, bundle) => sum + Number(bundle.patchCount || 0), 0), [catalog]);
+  const totalPatches = useMemo(() => {
+    if (Number.isFinite(Number(catalog?.registry?.currentReseamPatchCount))) return Number(catalog.registry.currentReseamPatchCount);
+    return (catalog?.bundles || []).reduce((sum, bundle) => sum + Number(bundle.patchCount || 0), 0);
+  }, [catalog]);
   const visibleApps = useMemo(() => {
     return (catalog?.apps || []).filter((app) => {
       if (category !== "all" && app.category !== category) return false;
@@ -607,7 +637,7 @@ export default function App() {
                 <div className="hero-kicker"><span className="hero-kicker-dot" /> COMMUNITY PATCH DIRECTORY</div>
                 <h1>Make your apps <span>more yours.</span></h1>
                 <p>Discover community-made patches, explore what they change, and add compatible sources to Reseam.</p>
-                <div className="hero-links"><a href="https://reseam.app/patches/" target="_blank" rel="noreferrer">Official patch directory <ArrowUpRight size={14} /></a><span className="hero-separator" /><span>Catalog snapshot: {formatDate(catalog?.generatedAt)}</span></div>
+                <div className="hero-links"><a href="https://reseam.app/patches/" target="_blank" rel="noreferrer">Official patch directory <ArrowUpRight size={14} /></a><span className="hero-separator" /><span>{catalog?.registry?.available ? "Live registry · " + Number(catalog.registry.currentReseamPatchCount || totalPatches).toLocaleString() + " current patches" : "Saved catalog · " + formatDate(catalog?.generatedAt)}</span></div>
               </div>
               <div className="hero-stats">
                 <Stat icon={Smartphone} label="Patchable apps" value={counts.apps.toLocaleString()} />
@@ -620,7 +650,7 @@ export default function App() {
                 <div><span className="eyebrow">{tab === "apps" ? "EXPLORE THE DIRECTORY" : tab === "bundles" ? "COMMUNITY COLLECTIONS" : "LATEST ACTIVITY"}</span><h2>{tab === "apps" ? "Find an app" : tab === "bundles" ? "Browse patch sources" : "What’s New"}</h2><p>{tab === "apps" ? "Search apps, inspect available patches, and check supported versions." : tab === "bundles" ? "Explore maintained collections and add their source directly to Reseam." : "Release notes collected from official and community patch bundles."}</p></div>
                 <button className="button button-secondary refresh-button" type="button" onClick={refreshCatalog} disabled={refreshing}><RefreshCw size={14} className={refreshing ? "spin" : ""} />{refreshing ? "Refreshing…" : "Refresh catalog"}</button>
               </div>
-              {loadError && <div className="notice notice-warning"><CircleHelp size={17} /><div><strong>Showing saved catalog data</strong><span>The latest catalog could not be reached. Previously saved data may still be usable.</span></div><button type="button" className="notice-action" onClick={refreshCatalog}>Try again</button></div>}
+              {loadError && <div className="notice notice-warning"><CircleHelp size={17} /><div><strong>Live registry temporarily unavailable</strong><span>Keeping the last loaded catalog for now. Try refreshing again shortly.</span></div><button type="button" className="notice-action" onClick={refreshCatalog}>Try again</button></div>}
               {(catalog?.staleSources || []).length > 0 && <div className="notice notice-warning"><CircleHelp size={17} /><div><strong>Some sources could not be refreshed</strong><span>Showing last saved source data. Check source details for errors.</span></div><details><summary>Details</summary>{catalog.staleSources.map((source) => <p key={source.url}>{source.name}: {source.error}</p>)}</details></div>}
               <div className="catalog-controls">
                 <SearchControl value={query} onChange={setQuery} placeholder={tab === "apps" ? "Search apps or patches…" : tab === "bundles" ? "Search bundles…" : "Search release notes…"} onClear={() => setQuery("")} />
@@ -629,7 +659,7 @@ export default function App() {
                   <label className="select-control"><ArrowDownAZ size={15} /><select value={tab === "news" ? (sort === "oldest" ? "oldest" : "popular") : sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort results">{tab === "news" ? <><option value="popular">Newest releases</option><option value="oldest">Oldest releases</option></> : <><option value="popular">Most patches</option><option value="name">Name A–Z</option><option value="patches-asc">Fewest patches</option></>}</select><ChevronDown size={14} /></label>
                 </div>
               </div>
-              <div className="results-summary"><span>{tab === "apps" ? "PATCHABLE APPS" : tab === "bundles" ? "PATCH SOURCES" : "RELEASE NOTES"}</span><div><strong>{(tab === "apps" ? visibleApps.length : tab === "bundles" ? visibleBundles.length : visibleUpdates.length).toLocaleString()}</strong> results <span className="results-divider">·</span> Updated {formatDate(catalog?.generatedAt)}</div></div>
+              <div className="results-summary"><span>{tab === "apps" ? "PATCHABLE APPS" : tab === "bundles" ? "PATCH SOURCES" : "RELEASE NOTES"}</span><div><strong>{(tab === "apps" ? visibleApps.length : tab === "bundles" ? visibleBundles.length : visibleUpdates.length).toLocaleString()}</strong> results <span className="results-divider">·</span> Checked {formatDate(catalog?.fetchedAt || catalog?.generatedAt)}</div></div>
               {tab === "apps" && (
                 visibleApps.length ? <>
                   <div className="app-grid">{visibleApps.slice(0, pageSize).map((app) => <AppCard key={app.packageName} app={app} onOpen={openApp} />)}</div>
@@ -657,7 +687,7 @@ export default function App() {
           <span className="footer-legal">Community maintained · Not affiliated with Reseam</span>
           <div className="footer-links"><a href="https://reseam.app/" target="_blank" rel="noreferrer">Reseam <ArrowUpRight size={12} /></a><a href="https://patch-bundles.api.jmancentral.com/" target="_blank" rel="noreferrer">Patch registry <ArrowUpRight size={12} /></a><a href={GITHUB_URL} target="_blank" rel="noreferrer">GitHub <ArrowUpRight size={12} /></a></div>
         </div>
-        <div className="footer-bottom"><span>Built for patch discovery.</span><span>Catalog generated {formatDate(catalog?.generatedAt)}</span></div>
+        <div className="footer-bottom"><span>Built for patch discovery.</span><span>Catalog fetched {formatDate(catalog?.fetchedAt || catalog?.generatedAt)}</span></div>
       </footer>
     </div>
   );

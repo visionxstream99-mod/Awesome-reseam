@@ -361,7 +361,7 @@ async function buildCatalogOnce() {
   const rjBundle = {
     name: "rj-reseam-patches", author: "RJ", description: "Community Reseam patches for Advanced Download Manager, Anixart and Pinterest.",
     homepage: rjSourceUrl, url: rjSourceUrl, indexUrl: rjSourceUrl, addUrl: rjAddUrl, version: "latest",
-    updatedAt: fetchedAt, patchCount: rjPatches.length, iconUrl: "https://github.com/visionxstream99-mod.png",
+    updatedAt: new Date().toISOString(), patchCount: rjPatches.length, iconUrl: "https://github.com/visionxstream99-mod.png",
     isOfficial: false, metadataStatus: "community", patchListAvailable: true, sourceId: "rj-reseam-patches",
     registryBundleId: null, releaseUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/latest",
     prerelease: false, releases: [], patches: rjPatches
@@ -369,7 +369,7 @@ async function buildCatalogOnce() {
   bundleItems.push(rjBundle);
   allPatches.push(...rjPatches);
   for (const patch of rjPatches) {
-    const release = { version: "latest", createdAt: fetchedAt, description: patch.name, prerelease: false, sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl };
+    const release = { version: "latest", createdAt: new Date().toISOString(), description: patch.name, prerelease: false, sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl };
     whatsNew.push(release);
   }
 

@@ -10,24 +10,24 @@ A community directory for discovering Reseam-compatible Android patch bundles, s
 - React 19 for reusable UI components and interactive detail views.
 - Vite for local development and optimized production builds.
 - Lucide React for interface icons.
-- A checked-in JSON catalog at \`public/catalog.json\`.
+- A checked-in JSON catalog at `public/catalog.json`.
 - A service worker for cached catalog access and offline-friendly page loading.
 
 ## Local development
 
 Requires Node.js 20 or newer.
 
-\`\`\`bash
+```bash
 npm install
 npm run dev
-\`\`\`
+```
 
 Create and preview a production build:
 
-\`\`\`bash
+```bash
 npm run build
 npm run preview
-\`\`\`
+```
 
 ## Features
 
@@ -38,20 +38,20 @@ npm run preview
 - “Add to Reseam” links for supported patch sources.
 - Copyable Android package IDs and Google Play links/status.
 - “What’s New” release history with search and expandable notes.
-- Keyboard shortcut \`Ctrl+K\` / \`Cmd+K\` to focus search.
+- Keyboard shortcut `Ctrl+K` / `Cmd+K` to focus search.
 - Responsive mobile/desktop layouts.
 - Query links for sharing app and bundle detail views.
 - Cached catalog fallback and an in-page refresh action.
 
 ## Project structure
 
-- \`src/main.jsx\` — React entry point.
-- \`src/App.jsx\` — navigation, app/bundle cards, search, detail pages, patch option rendering, and release notes.
-- \`src/styles.css\` — responsive dark theme and component styles.
-- \`public/catalog.json\` — catalog snapshot used by the directory.
-- \`public/sw.js\` — service worker for shell and catalog caching.
-- \`public/reseam.svg\` — Reseam logo asset.
-- \`index.html\` — Vite document entry point.
+- `src/main.jsx` — React entry point.
+- `src/App.jsx` — navigation, app/bundle cards, search, detail pages, patch option rendering, and release notes.
+- `src/styles.css` — responsive dark theme and component styles.
+- `public/catalog.json` — catalog snapshot used by the directory.
+- `public/sw.js` — service worker for shell and catalog caching.
+- `public/reseam.svg` — Reseam logo asset.
+- `index.html` — Vite document entry point.
 
 ## Catalog freshness
 
@@ -63,4 +63,4 @@ Catalog contents are collected from the official Reseam patch index and communit
 
 ## Deployment
 
-The Vercel project is connected to this repository and deploys pushes to \`main\`. Every source change should be tested with \`npm run build\` before it is merged or deployed.
+The Vercel project is connected to this repository and deploys pushes to `main`. Every source change should be tested with `npm run build` before it is merged or deployed.

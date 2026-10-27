@@ -41,21 +41,26 @@ npm run preview
 - Keyboard shortcut `Ctrl+K` / `Cmd+K` to focus search.
 - Responsive mobile/desktop layouts.
 - Query links for sharing app and bundle detail views.
-- Cached catalog fallback and an in-page refresh action.
+- Live registry-backed catalog refresh with a saved snapshot fallback.
+- Scheduled snapshot validation and refresh every six hours, plus a manual GitHub Actions trigger.
+- Automated production build checks on pushes and pull requests.
 
 ## Project structure
 
 - `src/main.jsx` — React entry point.
 - `src/App.jsx` — navigation, app/bundle cards, search, detail pages, patch option rendering, and release notes.
 - `src/styles.css` — responsive dark theme and component styles.
-- `public/catalog.json` — catalog snapshot used by the directory.
+- `api/catalog.js` — generation-consistent live catalog API, normalized for the UI.
+- `public/catalog.json` — automatically refreshed static fallback snapshot.
 - `public/sw.js` — service worker for shell and catalog caching.
 - `public/reseam.svg` — Reseam logo asset.
 - `index.html` — Vite document entry point.
 
 ## Catalog freshness
 
-The checked-in catalog is a recovery snapshot, not a guarantee that every listed app or bundle is still the latest. Refresh the catalog source and validate its contents before publishing a refreshed snapshot. “Refresh catalog” attempts a network reload of the saved catalog URL; it does not generate a new catalog itself.
+The app now loads from `/api/catalog`, which reads the current Reseam registry, validates pagination against a registry generation, filters hidden patches, and normalizes bundle, app, patch, option, and release-note metadata for the UI. The **Refresh catalog** button forces a fresh registry read. Successful responses are cached server-side briefly to avoid repeatedly downloading the same data, and the previous checked-in catalog is used only as a fallback if the live registry is unavailable.
+
+The GitHub Actions workflow updates `public/catalog.json` every six hours and can also be run manually from **Actions → Refresh live catalog snapshot → Run workflow**. It validates the response before committing the snapshot. Build checks run on every push and pull request.
 
 ## Attribution
 

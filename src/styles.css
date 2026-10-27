@@ -364,6 +364,15 @@ button, a, input, select { min-width: 0; }
   .bundle-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+.app-card-heading-copy .app-card-name {
+  display: block;
+  margin: 0 0 4px;
+  line-height: 1.3;
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -.025em;
+  color: var(--text);
+}
 @media (max-width: 760px) {
   .header-inner, .nav-wrap, .main-content, .footer-inner, .footer-bottom {
     width: calc(100% - 32px);
@@ -566,7 +575,7 @@ button, a, input, select { min-width: 0; }
   flex: 1 1 auto;
   min-width: 0;
 }
-.app-card-heading-copy h3 {
+.app-card-heading-copy .app-card-name {
   margin: 0 0 4px;
   font-size: 17px;
   line-height: 1.3;
@@ -595,7 +604,7 @@ button, a, input, select { min-width: 0; }
   margin: -2px 0 0;
   list-style: none;
 }
-.app-patch-preview li {
+.app-patch-preview-item {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr);
   align-items: start;
@@ -793,7 +802,7 @@ button, a, input, select { min-width: 0; }
   .app-card { min-height: 0; }
   .app-card-main { padding: 18px 17px 16px; }
   .app-avatar { width: 56px; height: 56px; }
-  .app-card-heading-copy h3 { font-size: 18px; }
+  .app-card-heading-copy .app-card-name { font-size: 18px; }
   .app-patch-preview { gap: 12px; }
   .app-patch-copy strong { font-size: 12px; }
   .app-patch-copy small { font-size: 11px; }
@@ -830,7 +839,7 @@ button, a, input, select { min-width: 0; }
   .filter-controls .select-control select { font-size: 11px; }
   .app-card-top { gap: 11px; }
   .app-avatar { width: 52px; height: 52px; }
-  .app-card-heading-copy h3 { font-size: 17px; }
+  .app-card-heading-copy .app-card-name { font-size: 17px; }
   .app-card-meta { gap: 8px 10px; }
 }
 

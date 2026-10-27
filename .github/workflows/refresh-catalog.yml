@@ -1,0 +1,77 @@
+name: Refresh live catalog snapshot
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-catalog-main
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Fetch and validate the live catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 3 --retry-delay 2 \
+            --connect-timeout 15 --max-time 90 \
+            "https://awesome-reseam.vercel.app/api/catalog?refresh=1" \
+            --output /tmp/catalog.json
+
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+
+          const catalog = JSON.parse(fs.readFileSync("/tmp/catalog.json", "utf8"));
+          const errors = [];
+
+          if (!catalog.registry?.available) errors.push("Registry is not available");
+          if (!catalog.registry?.generation) errors.push("Missing registry generation");
+          if (!Array.isArray(catalog.apps)) errors.push("Apps must be an array");
+          if (!Array.isArray(catalog.bundles) || catalog.bundles.length === 0) errors.push("No bundle summaries returned");
+          if (!catalog.official || !Array.isArray(catalog.official.patches)) errors.push("Official patch list is missing");
+          if (!Array.isArray(catalog.community)) errors.push("Community sources must be an array");
+          if (!catalog.generatedAt || !catalog.fetchedAt) errors.push("Catalog timestamps are missing");
+          if (Number(catalog.registry.currentReseamBundleCount || 0) < 1) errors.push("No current Reseam bundles found");
+
+          if (errors.length) {
+            console.error(errors.join("\n"));
+            process.exit(1);
+          }
+
+          console.log(JSON.stringify({
+            fetchedAt: catalog.fetchedAt,
+            generation: catalog.registry.generation,
+            bundles: catalog.bundles.length,
+            apps: catalog.apps.length,
+            patches: catalog.registry.currentReseamPatchCount
+          }, null, 2));
+          NODE
+
+          cp /tmp/catalog.json public/catalog.json
+
+      - name: Commit catalog update
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/catalog.json
+          if git diff --cached --quiet; then
+            echo "Catalog did not change."
+            exit 0
+          fi
+          git commit -m "chore: refresh live Reseam catalog snapshot"
+          git push origin HEAD:main

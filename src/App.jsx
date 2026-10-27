@@ -127,15 +127,7 @@ function AppCard({ app, onOpen }) {
   const [iconFailed, setIconFailed] = useState(false);
   useEffect(() => { setIconFailed(false); }, [app.iconUrl]);
   const patches = Array.isArray(app.patches) ? app.patches : [];
-  const previewPatches = patches.slice(0, 2);
   const sourceCount = new Set(patches.map((patch) => patch.sourceName || patch.bundle).filter(Boolean)).size;
-  const supportedVersions = Array.from(new Set(
-    patches.flatMap((patch) => (patch.apps || [])
-      .filter((target) => target.package === app.packageName)
-      .flatMap((target) => Array.isArray(target.versions) ? target.versions : [])
-      .map((version) => String(version).trim())
-      .filter(Boolean))
-  )).slice(0, 3);
   const copyPackage = async (event) => {
     event.stopPropagation();
     try {
@@ -169,27 +161,7 @@ function AppCard({ app, onOpen }) {
           <span className="card-arrow"><ArrowUpRight size={17} /></span>
         </span>
         <span className="app-card-info">
-          {previewPatches.length > 0 ? (
-            <>
-              <span className="app-card-section-label">AVAILABLE PATCHES</span>
-              <span className="app-patch-preview">
-                {previewPatches.map((patch) => (
-                  <span className="app-patch-preview-item" key={patch.id || patch.name}>
-                    <span className="app-patch-preview-icon"><Sparkles size={13} /></span>
-                    <span className="app-patch-copy">
-                      <strong>{patch.name || patch.id || "Community patch"}</strong>
-                      {patch.description && <small>{patch.description}</small>}
-                    </span>
-                  </span>
-                ))}
-              </span>
-            </>
-          ) : (
-            <span className="app-card-description">Open this app to inspect its available patch sources, options, and supported versions.</span>
-          )}
-          {supportedVersions.length > 0 && (
-            <span className="app-version-row"><span>Supported versions</span><strong>{supportedVersions.join(" · ")}</strong></span>
-          )}
+          <span className="app-card-description">Explore community patches and source details for this app.</span>
         </span>
       </button>
       <div className="app-card-meta">

@@ -1,0 +1,47 @@
+name: Build and validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Validate saved catalog
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+
+          const catalog = JSON.parse(fs.readFileSync("public/catalog.json", "utf8"));
+          if (!Array.isArray(catalog.apps)) throw new Error("catalog.apps must be an array");
+          if (!Array.isArray(catalog.bundles)) throw new Error("catalog.bundles must be an array");
+          if (!Array.isArray(catalog.community)) throw new Error("catalog.community must be an array");
+          if (!catalog.official || !Array.isArray(catalog.official.patches)) throw new Error("catalog.official.patches must be an array");
+          console.log(`Catalog OK: ${catalog.apps.length} apps, ${catalog.bundles.length} bundles.`);
+          NODE
+
+      - name: Build for production
+        run: npm run build

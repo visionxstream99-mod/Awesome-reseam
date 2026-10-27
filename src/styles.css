@@ -553,7 +553,7 @@ button, a, input, select { min-width: 0; }
 .search-control kbd { pointer-events: none; }
 
 .app-card {
-  min-height: 286px;
+  min-height: 232px;
 }
 .app-card-main {
   display: flex;
@@ -586,78 +586,10 @@ button, a, input, select { min-width: 0; }
   line-height: 1.55;
 }
 .app-card-info {
-  display: grid;
-  align-content: start;
-  gap: 11px;
+  display: flex;
+  align-items: flex-start;
   min-width: 0;
   flex: 1 1 auto;
-}
-.app-card-section-label {
-  color: var(--subtle);
-  font: 9px var(--mono);
-  letter-spacing: .09em;
-}
-.app-patch-preview {
-  display: grid;
-  gap: 11px;
-  padding: 0;
-  margin: -2px 0 0;
-  list-style: none;
-}
-.app-patch-preview-item {
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  align-items: start;
-  gap: 9px;
-  min-width: 0;
-}
-.app-patch-preview-icon {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid #304b38;
-  border-radius: 7px;
-  background: #1b2d20;
-  color: var(--mint);
-}
-.app-patch-copy {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-.app-patch-copy strong {
-  color: #dce7de;
-  font-size: 11px;
-  line-height: 1.45;
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-.app-patch-copy small {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  color: #89978d;
-  font-size: 10px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.app-version-row {
-  display: grid;
-  gap: 4px;
-  padding-top: 9px;
-  border-top: 1px solid var(--line-soft);
-}
-.app-version-row > span {
-  color: var(--subtle);
-  font-size: 9px;
-}
-.app-version-row strong {
-  color: #a9c6b1;
-  font: 10px/1.5 var(--mono);
-  font-weight: 400;
-  overflow-wrap: anywhere;
 }
 .app-card-description {
   min-height: 0;
@@ -803,9 +735,6 @@ button, a, input, select { min-width: 0; }
   .app-card-main { padding: 18px 17px 16px; }
   .app-avatar { width: 56px; height: 56px; }
   .app-card-heading-copy .app-card-name { font-size: 18px; }
-  .app-patch-preview { gap: 12px; }
-  .app-patch-copy strong { font-size: 12px; }
-  .app-patch-copy small { font-size: 11px; }
   .app-card-meta { padding: 12px 16px; }
   .app-card-actions { min-height: 54px; padding: 8px 10px; gap: 8px; }
   .app-card-actions .button,

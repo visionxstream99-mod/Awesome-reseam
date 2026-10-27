@@ -1,25 +1,25 @@
 export default async function handler(req, res) {
   const base = "https://patch-bundles.api.jmancentral.com";
-  const paths = [
-    "/bundles?ecosystem=reseam&limit=3&offset=0",
-    "/bundles?ecosystem=reseam&channel=latest&limit=3&offset=0",
-    "/apps?ecosystem=reseam&limit=3&offset=0",
-    "/patches?ecosystem=reseam&limit=2&offset=0",
-    "/sources?limit=3&offset=0"
-  ];
-  const call = async (path) => {
-    const start = Date.now();
-    try {
-      const response = await fetch(base + path, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(30000) });
-      const data = await response.json();
-      const entries = Array.isArray(data?.data) ? data.data : Array.isArray(data?.rows) ? data.rows : [];
-      return { path, status: response.status, ms: Date.now() - start, keys: Object.keys(data || {}), total: data?.total, count: entries.length, next_cursor: data?.next_cursor, samples: entries.slice(0, 2).map(row => {
-        if (path.startsWith("/sources")) return row;
-        if (path.startsWith("/bundles")) return {id:row.id,name:row.name,author:row.author,version:row.version,ecosystem:row.ecosystem,bundle_type:row.bundle_type,is_latest:row.is_latest,is_prerelease:row.is_prerelease,patch_count:row.patch_count,patch_list_available:row.patch_list_available,metadata_status:row.metadata_status,source:row.source,keys:Object.keys(row)};
-        return {id:row.id,name:row.name,description:row.description,bundle_id:row.bundle_id,source_id:row.source_id,metadata_status:row.metadata_status,options:row.options,packages:row.packages,keys:Object.keys(row)};
-      })};
-    } catch(error) {return {path,ms:Date.now()-start,error:String(error)};}
-  };
-  res.setHeader("Cache-Control","no-store");
-  res.status(200).json({probedAt:new Date().toISOString(),results:await Promise.all(paths.map(call))});
+  const start = Date.now();
+  try {
+    const listResponse = await fetch(base + "/bundles?ecosystem=reseam&channel=latest&limit=100&offset=0", { signal: AbortSignal.timeout(30000) });
+    const list = await listResponse.json();
+    const rows = Array.isArray(list.data) ? list.data : [];
+    const sampled = await Promise.all(rows.map(async (row) => {
+      const sourceUrl = row.source?.url;
+      const path = "/api/reseam/patches.json?source_url=" + encodeURIComponent(sourceUrl || "") + "&version=" + encodeURIComponent(row.version || "latest");
+      try {
+        const response = await fetch(base + path, { signal: AbortSignal.timeout(20000), headers: {accept:"application/json"} });
+        const data = await response.json();
+        const releases = Array.isArray(data.releases) ? data.releases : [];
+        const matching = releases.find((release) => String(release.version) === String(row.version)) || releases[0] || {};
+        return {bundle:{id:row.id,name:data.bundle?.name,author:data.bundle?.author,description:data.bundle?.description,homepage:data.bundle?.homepage,indexUrl:sourceUrl,version:row.version,updatedAt:row.created_at,patchCount:row.patch_count,iconUrl:row.icon_url||row.owner_avatar_url,metadataStatus:row.metadata_status,keys:Object.keys(row)}, status:response.status,topKeys:Object.keys(data||{}),nativeBundle:data.bundle,releaseCount:releases.length,releaseKeys:Object.keys(matching),releaseVersion:matching.version,releaseDate:matching.created_at,releasePatchCount:Array.isArray(matching.patches)?matching.patches.length:null,patchSample:Array.isArray(matching.patches)?matching.patches.slice(0,1):[],releaseSample:releases.slice(0,2).map(r=>({version:r.version,created_at:r.created_at,prerelease:r.prerelease,description:r.description,patchCount:r.patches?.length}))};
+      } catch (error) { return {bundleId:row.id,sourceUrl,error:String(error)}; }
+    }));
+    res.setHeader("Cache-Control","no-store");
+    res.status(200).json({durationMs:Date.now()-start,status:listResponse.status,keys:Object.keys(list||{}),total:list.total,rowCount:rows.length,sampled});
+  } catch(error) {
+    res.setHeader("Cache-Control","no-store");
+    res.status(500).json({error:String(error),stack:error?.stack});
+  }
 }

@@ -558,36 +558,43 @@ export default function App() {
 
   useEffect(() => {
     let cancelled = false;
+    const validCatalog = (data) =>
+      data && Array.isArray(data.apps) && Array.isArray(data.bundles) && Array.isArray(data.whatsNew);
+
     const loadCatalog = async () => {
+      // Render the bundled snapshot first; never make the first screen wait for the live registry.
+      let hasSnapshot = false;
       try {
-        const response = await fetch("/api/catalog", { cache: "no-store" });
+        const response = await fetch("/catalog.json");
+        if (!response.ok) throw new Error("Saved catalog unavailable");
+        const snapshot = await response.json();
+        if (!validCatalog(snapshot)) throw new Error("Saved catalog is invalid");
+        if (cancelled) return;
+        setCatalog(snapshot);
+        setLoadError(false);
+        hasSnapshot = true;
+      } catch {
+        // Continue to the live endpoint if the static snapshot cannot be read.
+      }
+
+      // Refresh in the background. The page remains usable while the registry warms up.
+      try {
+        const response = await fetch("/api/catalog");
         if (!response.ok) throw new Error("Live catalog unavailable");
-        const data = await response.json();
-        if (!data?.registry?.available || !Array.isArray(data.apps) || !Array.isArray(data.bundles)) {
-          throw new Error("Live catalog response was invalid");
-        }
+        const live = await response.json();
+        if (!live?.registry?.available || !validCatalog(live)) throw new Error("Live catalog response was invalid");
         if (!cancelled) {
-          setCatalog(data);
+          setCatalog(live);
           setLoadError(false);
         }
-        return;
       } catch {
-        try {
-          const response = await fetch("/catalog.json", { cache: "no-store" });
-          if (!response.ok) throw new Error("Saved catalog unavailable");
-          const data = await response.json();
-          if (!cancelled) {
-            setCatalog(data);
-            setLoadError(true);
-          }
-        } catch {
-          if (!cancelled) {
-            setCatalog(EMPTY_CATALOG);
-            setLoadError(true);
-          }
+        if (!cancelled) {
+          if (!hasSnapshot) setCatalog(EMPTY_CATALOG);
+          setLoadError(true);
         }
       }
     };
+
     void loadCatalog();
     return () => { cancelled = true; };
   }, []);

@@ -1,28 +1,25 @@
 export default async function handler(req, res) {
   const base = "https://patch-bundles.api.jmancentral.com";
+  const paths = [
+    "/bundles?ecosystem=reseam&limit=3&offset=0",
+    "/bundles?ecosystem=reseam&channel=latest&limit=3&offset=0",
+    "/apps?ecosystem=reseam&limit=3&offset=0",
+    "/patches?ecosystem=reseam&limit=2&offset=0",
+    "/sources?limit=3&offset=0"
+  ];
   const call = async (path) => {
     const start = Date.now();
     try {
       const response = await fetch(base + path, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(30000) });
-      const text = await response.text();
-      let data;
-      try { data = JSON.parse(text); } catch { data = text.slice(0, 300); }
-      const sample = Array.isArray(data?.data) ? data.data.slice(0, 1) : Array.isArray(data?.rows) ? data.rows.slice(0, 1) : data;
-      return { path, status: response.status, ms: Date.now() - start, headers: { cache: response.headers.get("cache-control") }, keys: data && typeof data === "object" ? Object.keys(data) : [], total: data?.total, count: Array.isArray(data?.data) ? data.data.length : Array.isArray(data?.rows) ? data.rows.length : null, next_cursor: data?.next_cursor, sample };
-    } catch (error) { return { path, ms: Date.now() - start, error: String(error) }; }
+      const data = await response.json();
+      const entries = Array.isArray(data?.data) ? data.data : Array.isArray(data?.rows) ? data.rows : [];
+      return { path, status: response.status, ms: Date.now() - start, keys: Object.keys(data || {}), total: data?.total, count: entries.length, next_cursor: data?.next_cursor, samples: entries.slice(0, 2).map(row => {
+        if (path.startsWith("/sources")) return row;
+        if (path.startsWith("/bundles")) return {id:row.id,name:row.name,author:row.author,version:row.version,ecosystem:row.ecosystem,bundle_type:row.bundle_type,is_latest:row.is_latest,is_prerelease:row.is_prerelease,patch_count:row.patch_count,patch_list_available:row.patch_list_available,metadata_status:row.metadata_status,source:row.source,keys:Object.keys(row)};
+        return {id:row.id,name:row.name,description:row.description,bundle_id:row.bundle_id,source_id:row.source_id,metadata_status:row.metadata_status,options:row.options,packages:row.packages,keys:Object.keys(row)};
+      })};
+    } catch(error) {return {path,ms:Date.now()-start,error:String(error)};}
   };
-  let health;
-  try { const response = await fetch(base + "/health", { signal: AbortSignal.timeout(15000) }); health = await response.json(); }
-  catch (error) { health = { error: String(error) }; }
-  const gen = health?.generation;
-  const paths = [
-    "/sources?limit=1&offset=0",
-    "/bundles?limit=1&offset=0",
-    "/apps?limit=1&offset=0",
-    "/patches?limit=1&offset=0",
-    "/catalog/patches?generation=" + encodeURIComponent(gen || "") + "&limit=1&page_cursor=0"
-  ];
-  const results = await Promise.all(paths.map(call));
-  res.setHeader("Cache-Control", "no-store");
-  res.status(200).json({ probedAt: new Date().toISOString(), health, results });
+  res.setHeader("Cache-Control","no-store");
+  res.status(200).json({probedAt:new Date().toISOString(),results:await Promise.all(paths.map(call))});
 }

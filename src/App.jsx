@@ -347,12 +347,14 @@ function Header({ tab, setTab, counts, onHome }) {
 
 function SearchControl({ value, onChange, placeholder, onClear }) {
   return (
-    <label className="search-control">
-      <Search size={17} />
+    <div className="search-control" onClick={(event) => {
+      if (!event.target.closest("button")) event.currentTarget.querySelector("input")?.focus();
+    }}>
+      <Search size={17} aria-hidden="true" />
       <input className="search-input" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} aria-label={placeholder} />
       {value && <IconButton label="Clear search" onClick={onClear}><X size={15} /></IconButton>}
       {!value && <kbd>Ctrl K</kbd>}
-    </label>
+    </div>
   );
 }
 

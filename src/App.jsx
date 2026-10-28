@@ -43,6 +43,25 @@ function normalizeText(value) {
   return String(value || "").toLocaleLowerCase().trim();
 }
 
+function sourceDisplayName(value) {
+  const raw = String(value || "").trim();
+  const known = {
+    "reseam-patches": "Reseam Official",
+    "baconreader-patches": "BaconReader",
+    "madkarma-patches": "MadKarma",
+    "rj-reseam-patches": "RJ",
+    "valenced": "Valenced"
+  };
+  return known[raw.toLowerCase()] || raw.replace(/[-_]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function displayVersion(value, fallback = "Version not listed") {
+  if (!value || !String(value).trim()) return fallback;
+  const version = String(value).trim();
+  if (/^latest$/i.test(version)) return "Latest";
+  return "v" + version.replace(/^v/i, "");
+}
+
 function patchSearchText(patch) {
   const apps = (patch.apps || []).map((app) => [app.package, ...(app.versions || [])].join(" ")).join(" ");
   const options = (patch.options || []).map((option) => [option.title, option.key, option.description].join(" ")).join(" ");
@@ -81,7 +100,8 @@ function getPatchBundle(catalog, patch) {
 }
 
 function bundleAddTarget(bundle) {
-  return bundle && (bundle.indexUrl || bundle.addUrl || bundle.homepage);
+  // Prefer an explicit install/download URL over a repository browsing URL.
+  return bundle && (bundle.addUrl || bundle.indexUrl || bundle.homepage);
 }
 
 function AddToReseam({ bundle, compact = false }) {
@@ -128,6 +148,9 @@ function AppCard({ app, onOpen }) {
   useEffect(() => { setIconFailed(false); }, [app.iconUrl]);
   const patches = Array.isArray(app.patches) ? app.patches : [];
   const sourceCount = new Set(patches.map((patch) => patch.sourceName || patch.bundle).filter(Boolean)).size;
+  const patchDescription = patches.length
+    ? `${patches.length} ${patches.length === 1 ? "patch" : "patches"} across ${sourceCount} ${sourceCount === 1 ? "source" : "sources"}.`
+    : "No patch details are listed yet.";
   const copyPackage = async (event) => {
     event.stopPropagation();
     try {
@@ -161,7 +184,7 @@ function AppCard({ app, onOpen }) {
           <span className="card-arrow"><ArrowUpRight size={17} /></span>
         </span>
         <span className="app-card-info">
-          <span className="app-card-description">Explore community patches and source details for this app.</span>
+          <span className="app-card-description">{patchDescription}</span>
         </span>
       </button>
       <div className="app-card-meta">
@@ -195,11 +218,11 @@ function BundleCard({ bundle, onOpen }) {
           <Avatar src={bundle.iconUrl} name={bundle.name} className="bundle-avatar" />
           <div className="bundle-card-flags">
             {bundle.isOfficial && <span className="official-badge"><ShieldCheck size={12} /> Official</span>}
-            <span className="version-badge">v{String(bundle.version || "unknown").replace(/^v/, "")}</span>
+            <span className="version-badge">{!bundle.version || bundle.version === "latest" ? "Latest" : "v" + String(bundle.version).replace(/^v/, "")}</span>
           </div>
           <span className="card-arrow"><ArrowUpRight size={17} /></span>
         </div>
-        <h3>{bundle.name}</h3>
+        <h3>{sourceDisplayName(bundle.name)}</h3>
         <p className="bundle-author">by {bundle.author || "Community maintainer"}</p>
         <p className="bundle-description">{bundle.description || "A community patch collection for supported Android apps."}</p>
       </button>
@@ -265,7 +288,7 @@ function PatchCard({ patch, bundle }) {
             </div>
           )}
           <div className="patch-source-row">
-            <span>Source: {patch.sourceName || bundle?.name || patch.bundle || "Community"}</span>
+            <span>Source: {sourceDisplayName(patch.sourceName || bundle?.name || patch.bundle || "Community")}</span>
             {(patch.sourceUrl || bundle?.homepage) && <a href={patch.sourceUrl || bundle.homepage} target="_blank" rel="noreferrer">Source repository <ArrowUpRight size={13} /></a>}
           </div>
         </div>
@@ -418,7 +441,7 @@ function AppDetail({ app, catalog, query, setQuery, onBack }) {
             <section className="app-bundle-group" key={group.bundle.indexUrl || group.bundle.name}>
               <div className="app-bundle-heading">
                 <Avatar src={group.bundle.iconUrl} name={group.bundle.name} className="bundle-mini-avatar" />
-                <div className="app-bundle-heading-copy"><strong>{group.bundle.name}</strong><span>{group.bundle.author} · {group.bundle.version ? "v" + String(group.bundle.version).replace(/^v/, "") : "Community source"}</span></div>
+                <div className="app-bundle-heading-copy"><strong>{sourceDisplayName(group.bundle.name)}</strong><span>{group.bundle.author} · {displayVersion(group.bundle.version, "Community source")}</span></div>
                 {group.bundle.isOfficial && <span className="official-badge"><ShieldCheck size={12} /> Official</span>}
                 <AddToReseam bundle={group.bundle} compact />
               </div>
@@ -443,10 +466,10 @@ function BundleDetail({ bundle, catalog, query, setQuery, onBack }) {
         <Avatar src={bundle.iconUrl} name={bundle.name} className="detail-app-avatar" />
         <div className="detail-title-copy">
           <div className="eyebrow">{bundle.isOfficial ? "Official source" : "Community source"}</div>
-          <h1>{bundle.name}</h1>
+          <h1>{sourceDisplayName(bundle.name)}</h1>
           <p className="detail-author">Maintained by {bundle.author || "the community"}</p>
           <p>{bundle.description || "A collection of Reseam patches for Android apps."}</p>
-          <div className="detail-stat-row"><span><Package size={14} /> {(bundle.patchCount || patches.length).toLocaleString()} patches</span><span><Clock3 size={14} /> {relativeDate(bundle.updatedAt)}</span><span>Version {bundle.version || "not listed"}</span></div>
+          <div className="detail-stat-row"><span><Package size={14} /> {(bundle.patchCount || patches.length).toLocaleString()} patches</span><span><Clock3 size={14} /> {relativeDate(bundle.updatedAt)}</span><span>{bundle.version ? "Version " + displayVersion(bundle.version) : "Version not listed"}</span></div>
           <div className="detail-primary-actions"><AddToReseam bundle={bundle} />{bundle.homepage && <a className="button button-secondary" href={bundle.homepage} target="_blank" rel="noreferrer"><Github size={15} /> Source repository <ArrowUpRight size={13} /></a>}</div>
         </div>
       </div>
@@ -469,7 +492,7 @@ function UpdateCard({ update }) {
     <article className="update-card">
       <div className="update-marker"><Clock3 size={16} /></div>
       <div className="update-content">
-        <div className="update-headline"><div><span className="update-source">{update.sourceName || "Patch source"}</span><h3>{update.version ? "Version " + update.version : "Source update"}</h3></div><time dateTime={update.createdAt || undefined}>{formatDate(update.createdAt)}</time></div>
+        <div className="update-headline"><div><span className="update-source">{sourceDisplayName(update.sourceName || "Patch source")}</span><h3>{update.version ? "Version " + String(update.version).replace(/^v/i, "") : "Source update"}</h3></div><time dateTime={update.createdAt || undefined}>{formatDate(update.createdAt)}</time></div>
         {text ? <p className={"update-description" + (!expanded && text.length > 230 ? " clipped" : "")}>{text}</p> : <p className="update-description muted">No release description was provided.</p>}
         {text.length > 230 && <button type="button" className="text-action" onClick={() => setExpanded((value) => !value)}>{expanded ? "Show less" : "Read release notes"} <ChevronDown size={13} className={expanded ? "rotate-180" : ""} /></button>}
         {update.sourceUrl && <a className="update-source-link" href={update.sourceUrl} target="_blank" rel="noreferrer">View source <ArrowUpRight size={13} /></a>}

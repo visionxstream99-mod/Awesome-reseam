@@ -60,6 +60,7 @@ jobs:
           }, null, 2));
           NODE
 
+          node scripts/validate-catalog.mjs /tmp/catalog.json
           cp /tmp/catalog.json public/catalog.json
 
       - name: Commit catalog update

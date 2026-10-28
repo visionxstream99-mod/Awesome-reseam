@@ -29,18 +29,11 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Validate saved catalog
-        run: |
-          node --input-type=module <<'NODE'
-          import fs from "node:fs";
+      - name: Check catalog API syntax
+        run: npm run check:api
 
-          const catalog = JSON.parse(fs.readFileSync("public/catalog.json", "utf8"));
-          if (!Array.isArray(catalog.apps)) throw new Error("catalog.apps must be an array");
-          if (!Array.isArray(catalog.bundles)) throw new Error("catalog.bundles must be an array");
-          if (!Array.isArray(catalog.community)) throw new Error("catalog.community must be an array");
-          if (!catalog.official || !Array.isArray(catalog.official.patches)) throw new Error("catalog.official.patches must be an array");
-          console.log(`Catalog OK: ${catalog.apps.length} apps, ${catalog.bundles.length} bundles.`);
-          NODE
+      - name: Validate catalog data and RJ patch metadata
+        run: npm run validate:catalog
 
       - name: Build for production
         run: npm run build

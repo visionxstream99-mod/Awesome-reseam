@@ -1,6 +1,22 @@
 const REGISTRY_BASE = "https://patch-bundles.api.jmancentral.com";
 const CACHE_TTL_MS = 2 * 60 * 1000;
 const API_TIMEOUT_MS = 25000;
+const RJ_SOURCE_URL = "https://github.com/visionxstream99-mod/RJ-reseam-patches";
+const RJ_REPO_API_URL = "https://api.github.com/repos/visionxstream99-mod/RJ-reseam-patches";
+const RJ_FALLBACK_RELEASE = Object.freeze({
+  version: "v0.1.1",
+  createdAt: "2026-10-27T06:01:24Z",
+  description: "Add to Reseam Manager\n• Add HyperLock patches alongside Pinterest\n• Add experimental Pinterest 14.42.0 privacy patches\n• docs: redesign README and clarify patch status",
+  prerelease: false,
+  releaseUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v0.1.1",
+  bundleUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v0.1.1/rj-reseam-patches.reseam"
+});
+const APP_METADATA_OVERRIDES = Object.freeze({
+  "com.dv.adm": { name: "Advanced Download Manager", category: "Tools" },
+  "com.swiftsoft.anixartd": { name: "Anixart", category: "Video" },
+  "com.appiolab.hyperlockscreenos": { name: "HyperLock Screen & AOD", category: "Personalization" },
+  "com.pinterest": { name: "Pinterest", category: "Photography" }
+});
 
 let cachedCatalog = null;
 let cacheExpiresAt = 0;
@@ -157,14 +173,19 @@ function normalizePackage(item) {
   };
 }
 
+function canonicalSourceUrl(value) {
+  return String(value || "").trim().replace(/\/+$/, "").replace(/\.git$/i, "").toLowerCase();
+}
+
 function categoryForApp(name, packageName) {
   const value = (String(name || "") + " " + String(packageName || "")).toLowerCase();
   const rules = [
     ["Weather", /weather|accuweather|windy|ventusky|meteoblue/],
     ["Social", /discord|reddit|instagram|facebook|twitter|tiktok|baconreader|threads/],
+    ["Personalization", /hyperlock|wallpaper|lock screen|aod|customize/],
     ["Music", /soundcloud|spotify|youtube music|music player|podcast|scrobbler/],
-    ["Video", /youtube|netflix|twitch|video player|streaming|crunchyroll/],
-    ["Photography", /photo|camera|gallery|picsart|lightroom|snapseed|imgur/],
+    ["Video", /youtube|netflix|twitch|video player|streaming|crunchyroll|anixart/],
+    ["Photography", /pinterest|photo|camera|gallery|picsart|lightroom|snapseed|imgur/],
     ["Productivity", /notion|office|calendar|tasks|notes|todo|documents|drive/],
     ["Development", /github|gitlab|termux|pydroid|code editor|developer|programming/],
     ["Finance", /paypal|wallet|banking|finance|expense|money manager/],
@@ -197,28 +218,86 @@ async function readNativeHistory(sourceUrl) {
   }
 }
 
+function normalizeTimestamp(value) {
+  if (!value) return null;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
+}
+
+function cleanReleaseDescription(value) {
+  return String(value || "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s*/gm, "")
+    .replace(/^\s*[-*]\s+/gm, "• ")
+    .replace(/\x60([^\x60]+)\x60/g, "$1")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
 function normalizeRelease(release, bundleName, sourceUrl) {
   return {
     version: release && release.version ? String(release.version) : "Unknown version",
-    createdAt: release && (release.created_at || release.createdAt || release.published_at) || null,
-    description: release && typeof release.description === "string" ? release.description : "",
+    createdAt: normalizeTimestamp(release && (release.created_at || release.createdAt || release.published_at)),
+    description: cleanReleaseDescription(release && release.description),
     prerelease: Boolean(release && (release.prerelease || release.is_prerelease)),
     sourceName: bundleName,
     sourceUrl
   };
 }
 
-async function buildCatalogOnce() {
-  const health = await readJson(makeUrl("/health"));
-  if (!health.generation) throw new Error("Registry health response did not include a catalog generation.");
+async function readLatestRjRelease() {
+  try {
+    const response = await fetch(RJ_REPO_API_URL + "/releases/latest", {
+      headers: {
+        accept: "application/vnd.github+json",
+        "x-github-api-version": "2022-11-28",
+        "user-agent": "awesome-reseam-catalog"
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000)
+    });
+    if (!response.ok) return RJ_FALLBACK_RELEASE;
 
-  const [bundleRecords, appRecords] = await Promise.all([
+    const release = await response.json();
+    if (!release || typeof release.tag_name !== "string" || !release.tag_name.trim()) return RJ_FALLBACK_RELEASE;
+
+    const assets = Array.isArray(release.assets) ? release.assets : [];
+    const bundleAsset = assets.find((asset) =>
+      typeof asset?.name === "string" &&
+      /\.reseam$/i.test(asset.name) &&
+      typeof asset.browser_download_url === "string"
+    );
+
+    return {
+      version: release.tag_name.trim(),
+      createdAt: normalizeTimestamp(release.published_at || release.created_at) || RJ_FALLBACK_RELEASE.createdAt,
+      description: cleanReleaseDescription(release.body),
+      prerelease: Boolean(release.prerelease),
+      releaseUrl: typeof release.html_url === "string" ? release.html_url : RJ_SOURCE_URL + "/releases/latest",
+      bundleUrl: bundleAsset?.browser_download_url || RJ_FALLBACK_RELEASE.bundleUrl
+    };
+  } catch {
+    // Keep the last known published metadata; never invent a release date.
+    return RJ_FALLBACK_RELEASE;
+  }
+}
+
+async function buildCatalogOnce() {
+  const [health, rjRelease, bundleRecords, appRecords] = await Promise.all([
+    readJson(makeUrl("/health")),
+    readLatestRjRelease(),
     readList("/bundles", { ecosystem: "reseam", channel: "latest" }),
     readList("/apps", { ecosystem: "reseam" }).catch(() => [])
   ]);
+  if (!health.generation) throw new Error("Registry health response did not include a catalog generation.");
 
   const currentBundles = bundleRecords
-    .filter((record) => record && record.source && record.source.url && record.source.enabled !== false)
+    // RJ is maintained below with verified release metadata; avoid a duplicate registry copy.
+    .filter((record) =>
+      record && record.source && record.source.url && record.source.enabled !== false &&
+      canonicalSourceUrl(record.source.url) !== canonicalSourceUrl(RJ_SOURCE_URL)
+    )
     .sort((a, b) => {
       const officialA = isOfficialBundle(a, a.reseam_bundle);
       const officialB = isOfficialBundle(b, b.reseam_bundle);
@@ -346,45 +425,231 @@ async function buildCatalogOnce() {
     }
   }
 
-  // RJ's community bundle is maintained in its own release repository.
-  // Keep it visible in Awesome Reseam even when the upstream registry has not indexed it yet.
-  const rjSourceUrl = "https://github.com/visionxstream99-mod/RJ-reseam-patches";
-  const rjAddUrl = "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/latest/download/rj-reseam-patches.reseam";
-  const rjPatches = [
-    { id: "app.rj.adm.patches.removeAds", name: "Remove Ads", description: "Removes supported advertising entry points in Advanced Download Manager.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.dv.adm", versions: ["7.6"] }], options: [] },
-    { id: "app.rj.anixart.patches.removeAds", name: "Remove Ads", description: "Community Anixart customization patch.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.anixart.dante", versions: [] }], options: [] },
-    { id: "app.rj.pinterest.patches.removeAdId", name: "Remove advertising ID access", description: "Removes the advertising ID permission/access path.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.pinterest", versions: ["14.42.0"] }], options: [] },
-    { id: "app.rj.pinterest.patches.analyticsOptOut", name: "Opt out of analytics", description: "Disables the optional analytics collection path targeted by this patch.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.pinterest", versions: ["14.42.0"] }], options: [] },
-    { id: "app.rj.pinterest.patches.disablePrivacySandbox", name: "Disable Privacy Sandbox", description: "Disables the targeted Privacy Sandbox integration.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.pinterest", versions: ["14.42.0"] }], options: [] },
-    { id: "app.rj.pinterest.patches.disableGoogleEngage", name: "Disable Google Engage", description: "Disables the targeted Google Engage integration.", bundle: "rj-reseam-patches", sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl, sourceVersion: "latest", official: false, apps: [{ package: "com.pinterest", versions: ["14.42.0"] }], options: [] }
-  ];
+  // RJ patch metadata tracks a real published release; refreshes never create fake timestamps.
+  const rjSourceUrl = RJ_SOURCE_URL;
+  const rjAddUrl = rjRelease.bundleUrl || RJ_FALLBACK_RELEASE.bundleUrl;
+  const rjPatchSpecs = [
+  {
+    "id": "app.rj.adm.patches.removeAds",
+    "name": "Remove ads",
+    "description": "Disables ADM 7.6 AdMob, Admax, and AppBrain banner and interstitial ad paths.",
+    "apps": [
+      {
+        "package": "com.dv.adm",
+        "versions": [
+          "7.6"
+        ]
+      }
+    ],
+    "options": []
+  },
+  {
+    "id": "app.rj.anixart.patches.removeAds",
+    "name": "Remove ads",
+    "description": "Removes banner, interstitial, and Kodik pre-roll ads from Anixart 10.5.",
+    "apps": [
+      {
+        "package": "com.swiftsoft.anixartd",
+        "versions": [
+          "10.5"
+        ]
+      }
+    ],
+    "options": [
+      {
+        "key": "removeBannerAds",
+        "title": "Banner ads",
+        "description": "Hides the bottom banner and its ad label.",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "key": "removeInterstitialAds",
+        "title": "Interstitial ads",
+        "description": "Stops Yandex interstitial ads from loading or showing.",
+        "type": "boolean",
+        "default": true
+      },
+      {
+        "key": "removeKodikPreRoll",
+        "title": "Kodik pre-roll ads",
+        "description": "Ends the Kodik ad activity before the ad player initializes and skips its one-time information prompt.",
+        "type": "boolean",
+        "default": true
+      }
+    ]
+  },
+  {
+    "id": "app.rj.hyperlock.patches.removeAds",
+    "name": "Remove ads",
+    "description": "Removes HyperLock 0.1.2 banner, native, interstitial, and app-open ads while preserving Play Store validation and purchase/entitlement checks.",
+    "apps": [
+      {
+        "package": "com.appiolab.hyperlockscreenos",
+        "versions": [
+          "0.1.2"
+        ]
+      }
+    ],
+    "options": []
+  },
+  {
+    "id": "app.rj.hyperlock.patches.customizeHyperLock",
+    "name": "Customize HyperLock",
+    "description": "Optional HyperLock 0.1.2 clock and visual settings. Does not modify Play Store checks, purchases, or premium entitlement.",
+    "apps": [
+      {
+        "package": "com.appiolab.hyperlockscreenos",
+        "versions": [
+          "0.1.2"
+        ]
+      }
+    ],
+    "options": [
+      {
+        "key": "use12HourClock",
+        "title": "Force 12-hour clock",
+        "description": "Force 12-hour time across clock styles. Off leaves HyperLock's saved setting unchanged.",
+        "type": "boolean",
+        "default": false
+      },
+      {
+        "key": "enableDepthEffect",
+        "title": "Force depth effects on",
+        "description": "Force the existing depth-effect preference on. Off leaves HyperLock's saved setting unchanged.",
+        "type": "boolean",
+        "default": false
+      },
+      {
+        "key": "enableParallaxAnimation",
+        "title": "Force parallax animation on",
+        "description": "Force the existing parallax preference on. Off leaves HyperLock's saved setting unchanged.",
+        "type": "boolean",
+        "default": false
+      }
+    ]
+  },
+  {
+    "id": "app.rj.pinterest.patches.removeAdvertisingIdPermission",
+    "name": "Remove Advertising ID permission",
+    "description": "Removes the Google Advertising ID permission from Pinterest 14.42.0.",
+    "apps": [
+      {
+        "package": "com.pinterest",
+        "versions": [
+          "14.42.0"
+        ]
+      }
+    ],
+    "options": []
+  },
+  {
+    "id": "app.rj.pinterest.patches.optOutGoogleAnalytics",
+    "name": "Opt out of Google Analytics",
+    "description": "Sets Pinterest's four Google Analytics default-consent flags to false.",
+    "apps": [
+      {
+        "package": "com.pinterest",
+        "versions": [
+          "14.42.0"
+        ]
+      }
+    ],
+    "options": []
+  },
+  {
+    "id": "app.rj.pinterest.patches.disablePrivacySandboxAdServices",
+    "name": "Disable Privacy Sandbox Ad Services",
+    "description": "Removes Pinterest's android.adservices.AD_SERVICES_CONFIG manifest property.",
+    "apps": [
+      {
+        "package": "com.pinterest",
+        "versions": [
+          "14.42.0"
+        ]
+      }
+    ],
+    "options": []
+  },
+  {
+    "id": "app.rj.pinterest.patches.disableGoogleEngageReceiver",
+    "name": "Disable Google Engage receiver",
+    "description": "Disables Pinterest's Google Engage recommendation broadcast receiver.",
+    "apps": [
+      {
+        "package": "com.pinterest",
+        "versions": [
+          "14.42.0"
+        ]
+      }
+    ],
+    "options": []
+  }
+];
+  const rjPatches = rjPatchSpecs.map((patch) => ({
+    ...patch,
+    bundle: "rj-reseam-patches",
+    sourceName: "rj-reseam-patches",
+    sourceUrl: rjSourceUrl,
+    sourceVersion: rjRelease.version,
+    official: false,
+    options: (patch.options || []).map(normalizeOption)
+  }));
+  const rjReleaseDetails = {
+    version: rjRelease.version,
+    createdAt: rjRelease.createdAt,
+    description: rjRelease.description,
+    prerelease: rjRelease.prerelease,
+    sourceName: "rj-reseam-patches",
+    sourceUrl: rjSourceUrl,
+    releaseUrl: rjRelease.releaseUrl
+  };
+
   const rjBundle = {
-    name: "rj-reseam-patches", author: "RJ", description: "Community Reseam patches for Advanced Download Manager, Anixart and Pinterest.",
-    homepage: rjSourceUrl, url: rjSourceUrl, indexUrl: rjSourceUrl, addUrl: rjAddUrl, version: "latest",
-    updatedAt: new Date().toISOString(), patchCount: rjPatches.length, iconUrl: "https://github.com/visionxstream99-mod.png",
-    isOfficial: false, metadataStatus: "community", patchListAvailable: true, sourceId: "rj-reseam-patches",
-    registryBundleId: null, releaseUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/latest",
-    prerelease: false, releases: [], patches: rjPatches
+    name: "rj-reseam-patches",
+    author: "RJ",
+    description: "RJ community patches for Advanced Download Manager, Anixart, HyperLock Screen & AOD, and Pinterest.",
+    homepage: rjSourceUrl,
+    url: rjSourceUrl,
+    indexUrl: rjSourceUrl,
+    addUrl: rjAddUrl,
+    version: rjRelease.version,
+    updatedAt: rjRelease.createdAt,
+    patchCount: rjPatches.length,
+    iconUrl: "https://github.com/visionxstream99-mod.png",
+    isOfficial: false,
+    metadataStatus: "community",
+    patchListAvailable: true,
+    sourceId: "rj-reseam-patches",
+    registryBundleId: null,
+    releaseUrl: rjRelease.releaseUrl,
+    prerelease: rjRelease.prerelease,
+    releases: [rjReleaseDetails],
+    patches: rjPatches
   };
   bundleItems.push(rjBundle);
   allPatches.push(...rjPatches);
-  for (const patch of rjPatches) {
-    const release = { version: "latest", createdAt: new Date().toISOString(), description: patch.name, prerelease: false, sourceName: "rj-reseam-patches", sourceUrl: rjSourceUrl };
-    whatsNew.push(release);
+  // Patches are not releases: show only the actual published release once.
+  if (rjReleaseDetails.createdAt) {
+    whatsNew.push({
+      ...rjReleaseDetails,
+      sourceUrl: rjReleaseDetails.releaseUrl || rjSourceUrl
+    });
   }
+
 
   const appsMap = new Map();
   for (const [packageName, summary] of packageSummaryMap.entries()) {
     appsMap.set(packageName, {
       packageName,
-      name: summary.app_name || packageName,
+      name: APP_METADATA_OVERRIDES[packageName]?.name || summary.app_name || packageName,
       iconUrl: summary.icon_url || null,
       googlePlayStatus: "unknown",
       googlePlayStatusSource: summary.metadata_source || "registry",
       googlePlayCheckedAt: null,
       googlePlayEvidenceUrl: null,
       googlePlayMarketsChecked: [],
-      category: categoryMap.get(packageName) || categoryForApp(summary.app_name, packageName),
+      category: APP_METADATA_OVERRIDES[packageName]?.category || categoryMap.get(packageName) || categoryForApp(summary.app_name, packageName),
       patchCount: 0,
       bundleCount: 0,
       versions: Array.isArray(summary.versions) ? summary.versions : [],
@@ -398,14 +663,14 @@ async function buildCatalogOnce() {
       if (!appsMap.has(packageName)) {
         appsMap.set(packageName, {
           packageName,
-          name: packageSummaryMap.get(packageName)?.app_name || packageName,
+          name: APP_METADATA_OVERRIDES[packageName]?.name || packageSummaryMap.get(packageName)?.app_name || packageName,
           iconUrl: packageSummaryMap.get(packageName)?.icon_url || null,
           googlePlayStatus: "unknown",
           googlePlayStatusSource: "registry",
           googlePlayCheckedAt: null,
           googlePlayEvidenceUrl: null,
           googlePlayMarketsChecked: [],
-          category: categoryMap.get(packageName) || categoryForApp(packageSummaryMap.get(packageName)?.app_name || packageName, packageName),
+          category: APP_METADATA_OVERRIDES[packageName]?.category || categoryMap.get(packageName) || categoryForApp(packageSummaryMap.get(packageName)?.app_name || packageName, packageName),
           patchCount: 0,
           bundleCount: 0,
           versions: [],

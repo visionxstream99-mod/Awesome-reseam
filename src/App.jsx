@@ -490,6 +490,13 @@ function BundleDetail({ bundle, catalog, query, setQuery, onBack }) {
       return normalizeText([app.name, app.packageName, app.category, patchText].join(" ")).includes(needle);
     });
   }, [bundleApps, query]);
+  // Universal patches have no package target, so they must be shown separately
+  // instead of silently disappearing from the bundle's app list.
+  const universalPatches = useMemo(() => {
+    const needle = normalizeText(query);
+    return patches.filter((patch) => !Array.isArray(patch.apps) || patch.apps.length === 0)
+      .filter((patch) => !needle || patchSearchText(patch).includes(needle));
+  }, [patches, query]);
   const selectedApp = selectedPackage ? bundleApps.find((app) => app.packageName === selectedPackage) : null;
   const selectedAppPatches = useMemo(() => {
     if (!selectedApp) return [];
@@ -521,13 +528,23 @@ function BundleDetail({ bundle, catalog, query, setQuery, onBack }) {
             <div><h2>Apps in this bundle</h2><p>{filteredApps.length.toLocaleString()} of {bundleApps.length.toLocaleString()} supported apps · select an app to see its patches</p></div>
           </div>
           <SearchControl value={query} onChange={setQuery} placeholder="Search apps in this bundle…" onClear={() => setQuery("")} />
-          {filteredApps.length === 0 ? (
-            <EmptyState title={bundleApps.length ? "No apps match your search" : "No supported apps listed"} description={bundleApps.length ? "Try an app name, package ID, or patch keyword." : "This source did not provide app package targets for its patches."} onReset={() => setQuery("")} />
+          {filteredApps.length === 0 && universalPatches.length === 0 ? (
+            <EmptyState title={bundleApps.length ? "No apps match your search" : "No supported apps listed"} description={bundleApps.length ? "Try an app name, package ID, or patch keyword." : "This source has no app-targeted patches to list."} onReset={() => setQuery("")} />
           ) : (
             <>
-              <div className="app-grid bundle-app-grid">{filteredApps.slice(0, pageSize).map((app) => <AppCard key={app.packageName} app={app} onOpen={(nextApp) => { setSelectedPackage(nextApp.packageName); setQuery(""); }} />)}</div>
-              {filteredApps.length > pageSize && <div className="load-more"><button className="button button-secondary" type="button" onClick={() => setPageSize((value) => value + 30)}>Show more apps <ArrowRight size={14} /></button><span>Showing {Math.min(pageSize, filteredApps.length)} of {filteredApps.length}</span></div>}
-              {bundleApps.length > 0 && <p className="bundle-app-hint">Each app opens a list of patches from this bundle only.</p>}
+              {filteredApps.length > 0 && (
+                <>
+                  <div className="app-grid bundle-app-grid">{filteredApps.slice(0, pageSize).map((app) => <AppCard key={app.packageName} app={app} onOpen={(nextApp) => { setSelectedPackage(nextApp.packageName); setQuery(""); }} />)}</div>
+                  {filteredApps.length > pageSize && <div className="load-more"><button className="button button-secondary" type="button" onClick={() => setPageSize((value) => value + 30)}>Show more apps <ArrowRight size={14} /></button><span>Showing {Math.min(pageSize, filteredApps.length)} of {filteredApps.length}</span></div>}
+                  {bundleApps.length > 0 && <p className="bundle-app-hint">Each app opens a list of patches from this bundle only.</p>}
+                </>
+              )}
+              {universalPatches.length > 0 && (
+                <section className="universal-patches-section">
+                  <div className="detail-toolbar"><div><h2>General / universal patches</h2><p>{universalPatches.length} patches not tied to a specific app package</p></div></div>
+                  <div className="patch-list">{universalPatches.map((patch) => <PatchCard patch={patch} bundle={bundle} key={patch.id} />)}</div>
+                </section>
+              )}
             </>
           )}
         </>

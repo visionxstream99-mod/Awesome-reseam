@@ -1,3 +1,5 @@
+import catalogSnapshot from "../public/catalog.json" with { type: "json" };
+
 const REGISTRY_BASE = "https://patch-bundles.api.jmancentral.com";
 const CACHE_TTL_MS = 2 * 60 * 1000;
 const API_TIMEOUT_MS = 25000;
@@ -813,8 +815,20 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
   } catch (error) {
     const message = String(error && error.message || error);
-    res.setHeader("Cache-Control", "no-store");
-    return res.status(503).json({ error: "Live catalog refresh failed.", detail: message });
+    // Keep the directory usable when the upstream registry is temporarily offline.
+    // Never replace a known-good snapshot with an empty or partial catalog.
+    const fallback = {
+      ...catalogSnapshot,
+      registry: {
+        ...(catalogSnapshot.registry || {}),
+        available: false,
+        refreshError: message
+      },
+      refreshStatus: "snapshot-fallback"
+    };
+    res.setHeader("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    res.setHeader("X-Catalog-Cache", "SNAPSHOT-FALLBACK");
+    return res.status(200).json(fallback);
   } finally {
     if (!forceRefresh) inFlightBuild = null;
   }

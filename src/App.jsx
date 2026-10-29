@@ -456,9 +456,50 @@ function AppDetail({ app, catalog, query, setQuery, onBack }) {
 
 function BundleDetail({ bundle, catalog, query, setQuery, onBack }) {
   const [pageSize, setPageSize] = useState(30);
+  const [selectedPackage, setSelectedPackage] = useState(null);
   const patches = useMemo(() => getBundlePatches(catalog, bundle), [catalog, bundle]);
-  const filteredPatches = useMemo(() => patches.filter((patch) => !normalizeText(query) || patchSearchText(patch).includes(normalizeText(query))), [patches, query]);
-  useEffect(() => setPageSize(30), [bundle, query]);
+  const bundleApps = useMemo(() => {
+    const patchesByPackage = new Map();
+    patches.forEach((patch) => {
+      (patch.apps || []).forEach((target) => {
+        const packageName = String(target?.package || "").trim();
+        if (!packageName) return;
+        if (!patchesByPackage.has(packageName)) patchesByPackage.set(packageName, []);
+        const targetPatches = patchesByPackage.get(packageName);
+        if (!targetPatches.some((item) => item.id === patch.id)) targetPatches.push(patch);
+      });
+    });
+    return Array.from(patchesByPackage.entries()).map(([packageName, appPatches]) => {
+      const app = (catalog.apps || []).find((item) => item.packageName === packageName);
+      return {
+        ...(app || {}),
+        name: app?.name || packageName,
+        packageName,
+        category: app?.category || "Android app",
+        iconUrl: app?.iconUrl || null,
+        patches: appPatches,
+        patchCount: appPatches.length
+      };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }, [catalog, patches]);
+  const filteredApps = useMemo(() => {
+    const needle = normalizeText(query);
+    return bundleApps.filter((app) => {
+      if (!needle) return true;
+      const patchText = (app.patches || []).map(patchSearchText).join(" ");
+      return normalizeText([app.name, app.packageName, app.category, patchText].join(" ")).includes(needle);
+    });
+  }, [bundleApps, query]);
+  const selectedApp = selectedPackage ? bundleApps.find((app) => app.packageName === selectedPackage) : null;
+  const selectedAppPatches = useMemo(() => {
+    if (!selectedApp) return [];
+    const needle = normalizeText(query);
+    return selectedApp.patches.filter((patch) => !needle || patchSearchText(patch).includes(needle));
+  }, [selectedApp, query]);
+
+  useEffect(() => { setPageSize(30); }, [bundle, query, selectedPackage]);
+  useEffect(() => { setSelectedPackage(null); }, [bundle]);
+
   return (
     <section className="detail-page">
       <button className="back-link" type="button" onClick={onBack}><ArrowLeft size={16} /> Back to bundles</button>
@@ -469,16 +510,50 @@ function BundleDetail({ bundle, catalog, query, setQuery, onBack }) {
           <h1>{sourceDisplayName(bundle.name)}</h1>
           <p className="detail-author">Maintained by {bundle.author || "the community"}</p>
           <p>{bundle.description || "A collection of Reseam patches for Android apps."}</p>
-          <div className="detail-stat-row"><span><Package size={14} /> {(bundle.patchCount || patches.length).toLocaleString()} patches</span><span><Clock3 size={14} /> {relativeDate(bundle.updatedAt)}</span><span>{bundle.version ? "Version " + displayVersion(bundle.version) : "Version not listed"}</span></div>
+          <div className="detail-stat-row"><span><Package size={14} /> {(bundle.patchCount || patches.length).toLocaleString()} patches</span><span><Smartphone size={14} /> {bundleApps.length.toLocaleString()} apps</span><span><Clock3 size={14} /> {relativeDate(bundle.updatedAt)}</span><span>{bundle.version ? "Version " + displayVersion(bundle.version) : "Version not listed"}</span></div>
           <div className="detail-primary-actions"><AddToReseam bundle={bundle} />{bundle.homepage && <a className="button button-secondary" href={bundle.homepage} target="_blank" rel="noreferrer"><Github size={15} /> Source repository <ArrowUpRight size={13} /></a>}</div>
         </div>
       </div>
-      <div className="detail-toolbar"><div><h2>Patch directory</h2><p>{filteredPatches.length.toLocaleString()} patches match your search</p></div></div>
-      <SearchControl value={query} onChange={setQuery} placeholder="Filter patches in this bundle…" onClear={() => setQuery("")} />
-      {filteredPatches.length === 0 ? <EmptyState title="No patches found" description="Try another patch name, package ID, or keyword." onReset={() => setQuery("")} /> : (
+
+      {!selectedApp ? (
         <>
-          <div className="patch-list">{filteredPatches.slice(0, pageSize).map((patch) => <PatchCard patch={patch} bundle={bundle} key={patch.id} />)}</div>
-          {filteredPatches.length > pageSize && <div className="load-more"><button className="button button-secondary" type="button" onClick={() => setPageSize((value) => value + 30)}>Show more patches <ArrowDownUp size={14} /></button><span>Showing {Math.min(pageSize, filteredPatches.length)} of {filteredPatches.length}</span></div>}
+          <div className="detail-toolbar">
+            <div><h2>Apps in this bundle</h2><p>{filteredApps.length.toLocaleString()} of {bundleApps.length.toLocaleString()} supported apps · select an app to see its patches</p></div>
+          </div>
+          <SearchControl value={query} onChange={setQuery} placeholder="Search apps in this bundle…" onClear={() => setQuery("")} />
+          {filteredApps.length === 0 ? (
+            <EmptyState title={bundleApps.length ? "No apps match your search" : "No supported apps listed"} description={bundleApps.length ? "Try an app name, package ID, or patch keyword." : "This source did not provide app package targets for its patches."} onReset={() => setQuery("")} />
+          ) : (
+            <>
+              <div className="app-grid bundle-app-grid">{filteredApps.slice(0, pageSize).map((app) => <AppCard key={app.packageName} app={app} onOpen={(nextApp) => { setSelectedPackage(nextApp.packageName); setQuery(""); }} />)}</div>
+              {filteredApps.length > pageSize && <div className="load-more"><button className="button button-secondary" type="button" onClick={() => setPageSize((value) => value + 30)}>Show more apps <ArrowRight size={14} /></button><span>Showing {Math.min(pageSize, filteredApps.length)} of {filteredApps.length}</span></div>}
+              {bundleApps.length > 0 && <p className="bundle-app-hint">Each app opens a list of patches from this bundle only.</p>}
+            </>
+          )}
+        </>
+      ) : (
+        <>
+          <button className="back-link bundle-app-back" type="button" onClick={() => { setSelectedPackage(null); setQuery(""); }}><ArrowLeft size={16} /> Back to apps in this bundle</button>
+          <div className="detail-hero bundle-app-detail-hero">
+            <Avatar src={selectedApp.iconUrl} name={selectedApp.name} className="detail-app-avatar" />
+            <div className="detail-title-copy">
+              <div className="eyebrow">{selectedApp.category || "Android app"}</div>
+              <h1>{selectedApp.name}</h1>
+              <div className="detail-package-row"><code>{selectedApp.packageName}</code><button type="button" className="text-action" onClick={async () => { try { await navigator.clipboard.writeText(selectedApp.packageName); } catch {} }}><Copy size={13} /> Copy ID</button></div>
+              <p>Patch availability from {sourceDisplayName(bundle.name)} for this app.</p>
+              <div className="detail-stat-row"><span><Sparkles size={14} /> {selectedApp.patches.length} patches in this bundle</span><span><Boxes size={14} /> {Array.from(new Set(selectedApp.patches.flatMap((patch) => (patch.apps || []).find((target) => target.package === selectedApp.packageName)?.versions || []))).length} version labels</span></div>
+            </div>
+          </div>
+          <div className="detail-toolbar"><div><h2>Available patches</h2><p>{selectedAppPatches.length.toLocaleString()} patches match your search in this bundle</p></div></div>
+          <SearchControl value={query} onChange={setQuery} placeholder={"Search patches for " + selectedApp.name + "…"} onClear={() => setQuery("")} />
+          {selectedAppPatches.length === 0 ? (
+            <EmptyState title="No patches found" description="Try another patch name, package ID, or keyword." onReset={() => setQuery("")} />
+          ) : (
+            <>
+              <div className="patch-list">{selectedAppPatches.slice(0, pageSize).map((patch) => <PatchCard patch={patch} bundle={bundle} key={patch.id} />)}</div>
+              {selectedAppPatches.length > pageSize && <div className="load-more"><button className="button button-secondary" type="button" onClick={() => setPageSize((value) => value + 30)}>Show more patches <ArrowDownUp size={14} /></button><span>Showing {Math.min(pageSize, selectedAppPatches.length)} of {selectedAppPatches.length}</span></div>}
+            </>
+          )}
         </>
       )}
     </section>

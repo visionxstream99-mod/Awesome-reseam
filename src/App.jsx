@@ -435,7 +435,7 @@ function AppDetail({ app, catalog, query, setQuery, onBack }) {
         <label className="select-control compact-select"><Filter size={15} /><select value={patchFilter} onChange={(event) => setPatchFilter(event.target.value)} aria-label="Filter patches"><option value="all">All patches</option><option value="configurable">With options</option><option value="simple">No options</option></select><ChevronDown size={14} /></label>
       </div>
       <SearchControl value={query} onChange={setQuery} placeholder="Filter this app’s patches…" onClear={() => setQuery("")} />
-      {filteredGroups.length === 0 ? <EmptyState title="No patches found" description="Try a different search or filter." onReset={() => { setQuery(""); setPatchFilter("all"); }} /> : (
+      {filteredGroups.length === 0 ? <EmptyState title={patches.length === 0 ? "No patches available yet" : "No patches found"} description={patches.length === 0 ? `This app is listed in the catalog, but no current patch source targets ${app.packageName}. It will appear inside a bundle once a source publishes a patch for it.` : "Try a different search or filter."} onReset={() => { setQuery(""); setPatchFilter("all"); }} /> : (
         <div className="app-bundle-list">
           {filteredGroups.map((group) => (
             <section className="app-bundle-group" key={group.bundle.indexUrl || group.bundle.name}>
@@ -602,7 +602,7 @@ export default function App() {
   const [sort, setSort] = useState("popular");
   const [selectedApp, setSelectedApp] = useState(null);
   const [selectedBundle, setSelectedBundle] = useState(null);
-  const [pageSize, setPageSize] = useState(24);
+  const [pageSize, setPageSize] = useState(60);
   const [sortOpen, setSortOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -612,7 +612,7 @@ export default function App() {
     setSelectedBundle(null);
     setQuery("");
     setCategory("all");
-    setPageSize(24);
+    setPageSize(60);
     setSortOpen(false);
     const url = new URL(window.location.href);
     url.searchParams.delete("app");

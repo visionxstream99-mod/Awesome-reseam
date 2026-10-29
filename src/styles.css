@@ -100,6 +100,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .search-control { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; height: 45px; padding: 0 13px; border: 1px solid var(--line); border-radius: 11px; color: var(--subtle); background: #121212; transition: border-color .16s, box-shadow .16s; cursor: text; }
 .search-control:focus-within { border-color: #7e7e7e; box-shadow: 0 0 0 3px #dcdcdc12; }
 .search-input { width: 100%; min-width: 0; padding: 0; outline: none; border: 0; color: var(--text); background: transparent; font-size: 12px; }
+.search-control .search-input:focus-visible { outline: none; box-shadow: none; }
+.search-control:focus-within { outline: none; border-color: #777777; box-shadow: 0 0 0 3px #ffffff0a; }
 .search-input::placeholder { color: #718077; }
 .search-control kbd { flex: 0 0 auto; padding: 4px 6px; border: 1px solid #373737; border-radius: 5px; color: #8e9e92; background: #1b1b1b; font: 10px var(--mono); }
 .icon-button { display: inline-grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 7px; color: var(--muted); background: transparent; cursor: pointer; }

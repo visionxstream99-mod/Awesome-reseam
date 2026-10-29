@@ -42,8 +42,24 @@ function makeUrl(path, params = {}) {
   return url.toString();
 }
 
+async function fetchRegistry(url, options) {
+  try {
+    return await fetch(url, options);
+  } catch (error) {
+    const cause = error && error.cause;
+    const details = [
+      String(error && error.message || error),
+      cause && cause.code ? "code=" + cause.code : "",
+      cause && cause.message ? "cause=" + cause.message : ""
+    ].filter(Boolean).join("; ");
+    const diagnostic = new Error("Registry request failed for " + url + ": " + details);
+    diagnostic.cause = error;
+    throw diagnostic;
+  }
+}
+
 async function readJson(url, { allowNotFound = false } = {}) {
-  const response = await fetch(url, {
+  const response = await fetchRegistry(url, {
     headers: { accept: "application/json" },
     cache: "no-store",
     signal: AbortSignal.timeout(API_TIMEOUT_MS)
@@ -111,7 +127,7 @@ async function readBundlePatches(bundleId, generation) {
       compact: "true"
     });
 
-    const response = await fetch(url, {
+    const response = await fetchRegistry(url, {
       headers: { accept: "application/json" },
       cache: "no-store",
       signal: AbortSignal.timeout(API_TIMEOUT_MS)

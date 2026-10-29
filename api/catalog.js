@@ -20,7 +20,8 @@ const APP_METADATA_OVERRIDES = Object.freeze({
   "com.pinterest": { name: "Pinterest", category: "Photography" },
   "com.adguard.android": { name: "AdGuard", category: "Tools" },
   "com.onelouder.baconreader": { name: "BaconReader", category: "Social" },
-  "com.onelouder.baconreader.premium": { name: "BaconReader Premium", category: "Social" }
+  "com.onelouder.baconreader.premium": { name: "BaconReader Premium", category: "Social" },
+  "in.startv.hotstar": { name: "JioHotstar", category: "Video" }
 });
 
 let cachedCatalog = null;
@@ -500,6 +501,62 @@ async function buildCatalogOnce() {
       }
     ]
   },
+{
+    "id": "app.rj.hotstar.patches.removeAds",
+    "name": "Remove ads",
+    "description": "Experimental source definition for pre-roll, mid-roll, and live-match ads. Exact target/version and runtime verification pending; inclusion in the published bundle is unconfirmed.",
+    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
+    "options": [],
+    "sourceOnly": true
+  },
+  {
+    "id": "app.rj.hotstar.patches.enableScreenMirroring",
+    "name": "Enable screen mirroring",
+    "description": "Experimental source definition for playback during screen mirroring or HDMI output. Runtime verification and release inclusion are unconfirmed.",
+    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
+    "options": [],
+    "sourceOnly": true
+  },
+  {
+    "id": "app.rj.hotstar.patches.enableAllCodecs",
+    "name": "Enable all codecs",
+    "description": "Experimental source definition for codec and resolution capability checks. Runtime verification and release inclusion are unconfirmed.",
+    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
+    "options": [],
+    "sourceOnly": true
+  },
+  {
+    "id": "app.rj.hotstar.patches.forceHdr10",
+    "name": "Force HDR10",
+    "description": "Experimental source definition for HDR capability checks. Device support, runtime behavior, and release inclusion are unconfirmed.",
+    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
+    "options": [],
+    "sourceOnly": true
+  },
+  {
+    "id": "app.rj.hotstar.patches.unlockPremium",
+    "name": "Unlock premium",
+    "description": "Source-only experimental definition. The repository says inclusion in the published bundle and runtime behavior are not confirmed.",
+    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
+    "options": [],
+    "sourceOnly": true
+  },
+  {
+    "id": "app.rj.hotstar.patches.enableScreenshots",
+    "name": "Enable screenshots",
+    "description": "Experimental source definition for screenshot and screen-recording restrictions. Runtime verification and release inclusion are unconfirmed.",
+    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
+    "options": [],
+    "sourceOnly": true
+  },
+  {
+    "id": "app.rj.hotstar.patches.bypassSignatureCheck",
+    "name": "Bypass signature check",
+    "description": "Source-only experimental definition for app-signature verification. The repository does not confirm it is a verified or supported release feature.",
+    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
+    "options": [],
+    "sourceOnly": true
+  },
   {
     "id": "app.rj.hyperlock.patches.removeAds",
     "name": "Remove ads",
@@ -515,40 +572,20 @@ async function buildCatalogOnce() {
     "options": []
   },
   {
-    "id": "app.rj.hyperlock.patches.customizeHyperLock",
-    "name": "Customize HyperLock",
-    "description": "Optional HyperLock 0.1.2 clock and visual settings. Does not modify Play Store checks, purchases, or premium entitlement.",
-    "apps": [
-      {
-        "package": "com.appiolab.hyperlockscreenos",
-        "versions": [
-          "0.1.2"
-        ]
-      }
-    ],
-    "options": [
-      {
-        "key": "use12HourClock",
-        "title": "Force 12-hour clock",
-        "description": "Force 12-hour time across clock styles. Off leaves HyperLock's saved setting unchanged.",
-        "type": "boolean",
-        "default": false
-      },
-      {
-        "key": "enableDepthEffect",
-        "title": "Force depth effects on",
-        "description": "Force the existing depth-effect preference on. Off leaves HyperLock's saved setting unchanged.",
-        "type": "boolean",
-        "default": false
-      },
-      {
-        "key": "enableParallaxAnimation",
-        "title": "Force parallax animation on",
-        "description": "Force the existing parallax preference on. Off leaves HyperLock's saved setting unchanged.",
-        "type": "boolean",
-        "default": false
-      }
-    ]
+    "id": "app.rj.hyperlock.patches.unlockPremium",
+    "name": "Unlock premium",
+    "description": "Source-only experimental definition. The repository says inclusion in the published bundle and runtime behavior are not confirmed.",
+    "apps": [{ "package": "com.appiolab.hyperlockscreenos", "versions": ["0.1.2"] }],
+    "options": [],
+    "sourceOnly": true
+  },
+  {
+    "id": "app.rj.hyperlock.patches.bypassLicenseCheck",
+    "name": "Bypass license check",
+    "description": "Source-only experimental definition for installer/license validation. It is not a verified or supported release feature.",
+    "apps": [{ "package": "com.appiolab.hyperlockscreenos", "versions": ["0.1.2"] }],
+    "options": [],
+    "sourceOnly": true
   },
   {
     "id": "app.rj.pinterest.patches.removeAdvertisingIdPermission",
@@ -629,7 +666,7 @@ async function buildCatalogOnce() {
   const rjBundle = {
     name: "rj-reseam-patches",
     author: "RJ",
-    description: "RJ community patches for Advanced Download Manager, Anixart, HyperLock Screen & AOD, and Pinterest.",
+    description: "RJ community patches for Advanced Download Manager, Anixart, JioHotstar, HyperLock Screen & AOD, and Pinterest. Some entries are experimental source definitions and are not confirmed in the latest published .reseam bundle.",
     homepage: rjSourceUrl,
     url: rjSourceUrl,
     indexUrl: rjSourceUrl,

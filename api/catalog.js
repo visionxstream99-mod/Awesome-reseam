@@ -17,7 +17,10 @@ const APP_METADATA_OVERRIDES = Object.freeze({
   "com.dv.adm": { name: "Advanced Download Manager", category: "Tools" },
   "com.swiftsoft.anixartd": { name: "Anixart", category: "Video" },
   "com.appiolab.hyperlockscreenos": { name: "HyperLock Screen & AOD", category: "Personalization" },
-  "com.pinterest": { name: "Pinterest", category: "Photography" }
+  "com.pinterest": { name: "Pinterest", category: "Photography" },
+  "com.adguard.android": { name: "AdGuard", category: "Tools" },
+  "com.onelouder.baconreader": { name: "BaconReader", category: "Social" },
+  "com.onelouder.baconreader.premium": { name: "BaconReader Premium", category: "Social" }
 });
 
 let cachedCatalog = null;

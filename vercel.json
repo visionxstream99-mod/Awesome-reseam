@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "regions": [
+    "bom1"
+  ],
+  "functions": {
+    "api/catalog.js": {
+      "maxDuration": 60
+    }
+  }
+}

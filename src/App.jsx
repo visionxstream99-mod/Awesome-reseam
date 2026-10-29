@@ -251,6 +251,7 @@ function PatchCard({ patch, bundle }) {
           <span>{patch.description || "No description provided."}</span>
           <span className="patch-submeta">
             <code>{patch.id}</code>
+            {patch.sourceOnly && <span>Source-only · release inclusion unconfirmed</span>}
             {packages.length > 0 && <span>{packages.length} target {packages.length === 1 ? "package" : "packages"}</span>}
             {options.length > 0 && <span>{options.length} configurable {options.length === 1 ? "option" : "options"}</span>}
           </span>

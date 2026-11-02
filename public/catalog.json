@@ -8090,9 +8090,9 @@
       "homepage": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
       "url": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
       "indexUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-      "addUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v1.0.2/rj-reseam-patches.reseam",
-      "version": "v1.0.2",
-      "updatedAt": "2026-10-29T08:35:24.000Z",
+      "addUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v0.1.4/rj-reseam-patches.reseam",
+      "version": "v0.1.4",
+      "updatedAt": "2026-11-01T04:46:28Z",
       "patchCount": 16,
       "iconUrl": "https://github.com/visionxstream99-mod.png",
       "isOfficial": false,
@@ -8100,17 +8100,17 @@
       "patchListAvailable": true,
       "sourceId": "rj-reseam-patches",
       "registryBundleId": null,
-      "releaseUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v1.0.2",
+      "releaseUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v0.1.4",
       "prerelease": false,
       "releases": [
         {
-          "version": "v1.0.2",
-          "createdAt": "2026-10-29T08:35:24.000Z",
-          "description": "Add to Reseam Manager\n• Prepare RJ Reseam Patches 1.0.2 release\n• Fix release workflow execution and version tagging\n• Restore README layout and app icons; replace banner with profile logo\n• Show RJ GitHub profile picture in README",
+          "version": "v0.1.4",
+          "createdAt": "2026-11-01T04:46:28Z",
+          "description": "Update HyperLock patch IDs and move to Reseam workspace 0.35.0; refresh source documentation and Add to Reseam link.",
           "prerelease": false,
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "releaseUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v1.0.2"
+          "releaseUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v0.1.4"
         }
       ],
       "patches": [
@@ -8130,7 +8130,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8186,7 +8186,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8205,7 +8205,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8224,7 +8224,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8243,7 +8243,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8262,7 +8262,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8281,13 +8281,13 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
           "id": "app.rj.hyperlock.patches.unlockPremium",
           "name": "Unlock premium",
-          "description": "Source-only experimental definition. The repository says inclusion in the published bundle and runtime behavior are not confirmed.",
+          "description": "Unlocks PRO/VIP lock screen styles, custom fonts, wallpapers, and AOD features in HyperLock Screen & AOD 0.1.2.",
           "apps": [
             {
               "package": "com.appiolab.hyperlockscreenos",
@@ -8297,11 +8297,10 @@
             }
           ],
           "options": [],
-          "sourceOnly": true,
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8321,7 +8320,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8339,7 +8338,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8357,7 +8356,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8375,7 +8374,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8393,7 +8392,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8411,7 +8410,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8429,7 +8428,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -8447,7 +8446,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         }
       ]
@@ -8524,15 +8523,15 @@
       "description": "RJ community patch source listings for Advanced Download Manager, Anixart, JioHotstar, HyperLock Screen & AOD, and Pinterest. Some entries are experimental source definitions and are not confirmed in the latest published .reseam bundle.",
       "homepage": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
       "indexUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-      "addUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v1.0.2/rj-reseam-patches.reseam",
-      "version": "v1.0.2",
-      "updatedAt": "2026-10-29T08:35:24.000Z",
+      "addUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v0.1.4/rj-reseam-patches.reseam",
+      "version": "v0.1.4",
+      "updatedAt": "2026-11-01T04:46:28Z",
       "patchCount": 16,
       "iconUrl": "https://github.com/visionxstream99-mod.png",
       "isOfficial": false,
       "metadataStatus": "community",
       "prerelease": false,
-      "releaseUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v1.0.2"
+      "releaseUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v0.1.4"
     }
   ],
   "apps": [
@@ -8775,7 +8774,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         }
       ]
@@ -8912,7 +8911,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         }
       ]
@@ -11990,13 +11989,13 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
           "id": "app.rj.hyperlock.patches.unlockPremium",
           "name": "Unlock premium",
-          "description": "Source-only experimental definition. The repository says inclusion in the published bundle and runtime behavior are not confirmed.",
+          "description": "Unlocks PRO/VIP lock screen styles, custom fonts, wallpapers, and AOD features in HyperLock Screen & AOD 0.1.2.",
           "apps": [
             {
               "package": "com.appiolab.hyperlockscreenos",
@@ -12006,11 +12005,10 @@
             }
           ],
           "options": [],
-          "sourceOnly": true,
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -12030,7 +12028,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         }
       ]
@@ -12591,7 +12589,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -12609,7 +12607,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -12627,7 +12625,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -12645,7 +12643,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -12663,7 +12661,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -12681,7 +12679,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -12699,7 +12697,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         }
       ]
@@ -13306,7 +13304,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -13325,7 +13323,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -13344,7 +13342,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         },
         {
@@ -13363,7 +13361,7 @@
           "bundle": "rj-reseam-patches",
           "sourceName": "rj-reseam-patches",
           "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches",
-          "sourceVersion": "v1.0.2",
+          "sourceVersion": "v0.1.4",
           "official": false
         }
       ]
@@ -17759,12 +17757,12 @@
   ],
   "whatsNew": [
     {
-      "version": "v1.0.2",
-      "createdAt": "2026-10-29T08:35:24.000Z",
-      "description": "Add to Reseam Manager\n• Prepare RJ Reseam Patches 1.0.2 release\n• Fix release workflow execution and version tagging\n• Restore README layout and app icons; replace banner with profile logo\n• Show RJ GitHub profile picture in README",
+      "version": "v0.1.4",
+      "createdAt": "2026-11-01T04:46:28Z",
+      "description": "Update HyperLock patch IDs and move to Reseam workspace 0.35.0; refresh source documentation and Add to Reseam link.",
       "prerelease": false,
       "sourceName": "rj-reseam-patches",
-      "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v1.0.2",
+      "sourceUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v0.1.4",
       "releaseUrl": "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v1.0.2"
     },
     {

@@ -83,7 +83,7 @@ const expectedRj = new Map([
   ["app.rj.adm.patches.removeAds", { packageName:"com.dv.adm", version:"7.6" }],
   ["app.rj.anixart.patches.removeAds", { packageName:"com.swiftsoft.anixartd", version:"10.5" }],
   ["app.rj.hyperlock.patches.removeAds", { packageName:"com.appiolab.hyperlockscreenos", version:"0.1.2" }],
-  ["app.rj.hyperlock.patches.customizeHyperLock", { packageName:"com.appiolab.hyperlockscreenos", version:"0.1.2" }],
+  ["app.rj.hyperlock.patches.unlockPremium", { packageName:"com.appiolab.hyperlockscreenos", version:"0.1.2" }],
   ["app.rj.pinterest.patches.removeAdvertisingIdPermission", { packageName:"com.pinterest", version:"14.42.0" }],
   ["app.rj.pinterest.patches.optOutGoogleAnalytics", { packageName:"com.pinterest", version:"14.42.0" }],
   ["app.rj.pinterest.patches.disablePrivacySandboxAdServices", { packageName:"com.pinterest", version:"14.42.0" }],
@@ -93,14 +93,15 @@ const expectedRj = new Map([
 const rj = (catalog.community || []).find((source) => source.name === "rj-reseam-patches");
 check(Boolean(rj), "RJ community bundle is missing.");
 if (rj) {
-  check(rj.patches.length === expectedRj.size, "RJ bundle must contain exactly " + expectedRj.size + " current patches.");
+  const currentRjPatches = rj.patches.filter((patch) => patch.sourceOnly !== true);
+  check(currentRjPatches.length === expectedRj.size, "RJ bundle must contain exactly " + expectedRj.size + " verified current patches.");
   check(typeof rj.version === "string" && rj.version.trim() && rj.version !== "latest", "RJ bundle must use a published release version, not a fabricated 'latest' label.");
   check(validDate(rj.updatedAt), "RJ bundle updatedAt must come from a real published release timestamp.");
   check(validUrl(rj.releaseUrl), "RJ bundle must link to a valid release page.");
   check(validUrl(rj.addUrl) && /\.reseam(?:$|[?#])/i.test(rj.addUrl), "RJ Add URL must point to a .reseam bundle asset.");
-  check(rj.patchCount === expectedRj.size && rj.patchCount === rj.patches.length, "RJ patch count must match the actual patch list.");
+  check(rj.patchCount === rj.patches.length, "RJ patch count must match the full patch list, including source-only entries.");
   for (const [id, expected] of expectedRj) {
-    const patch = rj.patches.find((item) => item.id === id);
+    const patch = currentRjPatches.find((item) => item.id === id);
     check(Boolean(patch), "RJ patch is missing: " + id);
     if (!patch) continue;
     check(patch.apps?.length === 1 && patch.apps[0]?.package === expected.packageName, "Wrong package target for " + id + ".");

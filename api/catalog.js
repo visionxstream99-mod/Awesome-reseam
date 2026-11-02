@@ -6,12 +6,12 @@ const API_TIMEOUT_MS = 25000;
 const RJ_SOURCE_URL = "https://github.com/visionxstream99-mod/RJ-reseam-patches";
 const RJ_REPO_API_URL = "https://api.github.com/repos/visionxstream99-mod/RJ-reseam-patches";
 const RJ_FALLBACK_RELEASE = Object.freeze({
-  version: "v0.1.1",
-  createdAt: "2026-10-27T06:01:24Z",
-  description: "Add to Reseam Manager\n• Add HyperLock patches alongside Pinterest\n• Add experimental Pinterest 14.42.0 privacy patches\n• docs: redesign README and clarify patch status",
+  version: "v0.1.4",
+  createdAt: "2026-11-01T04:46:28Z",
+  description: "Update HyperLock patch IDs and move to Reseam workspace 0.35.0; refresh source documentation and Add to Reseam link.",
   prerelease: false,
-  releaseUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v0.1.1",
-  bundleUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v0.1.1/rj-reseam-patches.reseam"
+  releaseUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v0.1.4",
+  bundleUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v0.1.4/rj-reseam-patches.reseam"
 });
 const APP_METADATA_OVERRIDES = Object.freeze({
   "com.dv.adm": { name: "Advanced Download Manager", category: "Tools" },
@@ -574,10 +574,9 @@ async function buildCatalogOnce() {
   {
     "id": "app.rj.hyperlock.patches.unlockPremium",
     "name": "Unlock premium",
-    "description": "Source-only experimental definition. The repository says inclusion in the published bundle and runtime behavior are not confirmed.",
+    "description": "Unlocks PRO/VIP lock screen styles, custom fonts, wallpapers, and AOD features in HyperLock Screen & AOD 0.1.2.",
     "apps": [{ "package": "com.appiolab.hyperlockscreenos", "versions": ["0.1.2"] }],
-    "options": [],
-    "sourceOnly": true
+    "options": []
   },
   {
     "id": "app.rj.hyperlock.patches.bypassLicenseCheck",

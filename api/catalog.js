@@ -11,7 +11,8 @@ const RJ_FALLBACK_RELEASE = Object.freeze({
   description: "Update HyperLock patch IDs and move to Reseam workspace 0.35.0; refresh source documentation and Add to Reseam link.",
   prerelease: false,
   releaseUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/tag/v0.1.4",
-  bundleUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v0.1.4/rj-reseam-patches.reseam"
+  bundleUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v0.1.4/rj-reseam-patches.reseam",
+  patchIndexUrl: "https://github.com/visionxstream99-mod/RJ-reseam-patches/releases/download/v0.1.4/patches.json"
 });
 const APP_METADATA_OVERRIDES = Object.freeze({
   "com.dv.adm": { name: "Advanced Download Manager", category: "Tools" },
@@ -290,6 +291,11 @@ async function readLatestRjRelease() {
       /\.reseam$/i.test(asset.name) &&
       typeof asset.browser_download_url === "string"
     );
+    const patchIndexAsset = assets.find((asset) =>
+      typeof asset?.name === "string" &&
+      asset.name.toLowerCase() === "patches.json" &&
+      typeof asset.browser_download_url === "string"
+    );
 
     return {
       version: release.tag_name.trim(),
@@ -297,12 +303,86 @@ async function readLatestRjRelease() {
       description: cleanReleaseDescription(release.body),
       prerelease: Boolean(release.prerelease),
       releaseUrl: typeof release.html_url === "string" ? release.html_url : RJ_SOURCE_URL + "/releases/latest",
-      bundleUrl: bundleAsset?.browser_download_url || RJ_FALLBACK_RELEASE.bundleUrl
+      bundleUrl: bundleAsset?.browser_download_url || RJ_FALLBACK_RELEASE.bundleUrl,
+      patchIndexUrl: patchIndexAsset?.browser_download_url || RJ_FALLBACK_RELEASE.patchIndexUrl
     };
   } catch {
     // Keep the last known published metadata; never invent a release date.
     return RJ_FALLBACK_RELEASE;
   }
+}
+
+async function readLatestRjPatchIndex(release) {
+  const indexUrl = release && release.patchIndexUrl;
+  if (!indexUrl) throw new Error("The latest RJ release does not expose a patches.json asset.");
+
+  const response = await fetch(indexUrl, {
+    headers: {
+      accept: "application/json",
+      "user-agent": "awesome-reseam-catalog"
+    },
+    cache: "no-store",
+    signal: AbortSignal.timeout(12000)
+  });
+  if (!response.ok) {
+    throw new Error("RJ release patches.json returned HTTP " + response.status + ".");
+  }
+
+  let indexData;
+  try {
+    indexData = await response.json();
+  } catch {
+    throw new Error("RJ release patches.json is not valid JSON.");
+  }
+
+  const releaseRows = Array.isArray(indexData && indexData.releases) ? indexData.releases : [];
+  const wantedVersion = String(release && release.version || "").replace(/^v/i, "");
+  const selectedRelease = releaseRows.find((item) =>
+    String(item && item.version || "").replace(/^v/i, "") === wantedVersion
+  );
+  if (!selectedRelease || !Array.isArray(selectedRelease.patches)) {
+    throw new Error("RJ patches.json does not contain the published release " + (release && release.version || "version") + ".");
+  }
+
+  const patches = selectedRelease.patches
+    .filter((item) => item && typeof item === "object" && item.hidden !== true)
+    .map((item) => {
+      const compatibility = item.compatibility && typeof item.compatibility === "object"
+        ? item.compatibility
+        : {};
+      const rawPackages = Array.isArray(compatibility.packages)
+        ? compatibility.packages
+        : Array.isArray(item.packages)
+          ? item.packages
+          : Array.isArray(item.compatiblePackages)
+            ? item.compatiblePackages
+            : [];
+      return {
+        id: typeof item.id === "string" && item.id.trim()
+          ? item.id.trim()
+          : typeof item.catalog_id === "string" && item.catalog_id.trim()
+            ? item.catalog_id.trim()
+            : "",
+        name: item.name || "Name unavailable",
+        description: item.description || "",
+        apps: rawPackages.map(normalizePackage).filter(Boolean),
+        options: Array.isArray(item.options) ? item.options.map(normalizeOption) : [],
+        sourceOnly: item.sourceOnly === true
+      };
+    })
+    .filter((item) => item.id);
+
+  if (!patches.length) throw new Error("RJ release patches.json contains no visible patch entries.");
+  const ids = new Set();
+  for (const patch of patches) {
+    if (ids.has(patch.id)) throw new Error("RJ release patches.json contains duplicate patch ID " + patch.id + ".");
+    ids.add(patch.id);
+  }
+
+  return {
+    bundle: indexData.bundle && typeof indexData.bundle === "object" ? indexData.bundle : {},
+    patches
+  };
 }
 
 async function buildCatalogOnce() {
@@ -313,6 +393,7 @@ async function buildCatalogOnce() {
     readList("/apps", { ecosystem: "reseam" }).catch(() => [])
   ]);
   if (!health.generation) throw new Error("Registry health response did not include a catalog generation.");
+  const rjIndex = await readLatestRjPatchIndex(rjRelease);
 
   const currentBundles = bundleRecords
     // RJ is maintained below with verified release metadata; avoid a duplicate registry copy.
@@ -450,199 +531,7 @@ async function buildCatalogOnce() {
   // RJ patch metadata tracks a real published release; refreshes never create fake timestamps.
   const rjSourceUrl = RJ_SOURCE_URL;
   const rjAddUrl = rjRelease.bundleUrl || RJ_FALLBACK_RELEASE.bundleUrl;
-  const rjPatchSpecs = [
-  {
-    "id": "app.rj.adm.patches.removeAds",
-    "name": "Remove ads",
-    "description": "Disables ADM 7.6 AdMob, Admax, and AppBrain banner and interstitial ad paths.",
-    "apps": [
-      {
-        "package": "com.dv.adm",
-        "versions": [
-          "7.6"
-        ]
-      }
-    ],
-    "options": []
-  },
-  {
-    "id": "app.rj.anixart.patches.removeAds",
-    "name": "Remove ads",
-    "description": "Removes banner, interstitial, and Kodik pre-roll ads from Anixart 10.5.",
-    "apps": [
-      {
-        "package": "com.swiftsoft.anixartd",
-        "versions": [
-          "10.5"
-        ]
-      }
-    ],
-    "options": [
-      {
-        "key": "removeBannerAds",
-        "title": "Banner ads",
-        "description": "Hides the bottom banner and its ad label.",
-        "type": "boolean",
-        "default": true
-      },
-      {
-        "key": "removeInterstitialAds",
-        "title": "Interstitial ads",
-        "description": "Stops Yandex interstitial ads from loading or showing.",
-        "type": "boolean",
-        "default": true
-      },
-      {
-        "key": "removeKodikPreRoll",
-        "title": "Kodik pre-roll ads",
-        "description": "Ends the Kodik ad activity before the ad player initializes and skips its one-time information prompt.",
-        "type": "boolean",
-        "default": true
-      }
-    ]
-  },
-{
-    "id": "app.rj.hotstar.patches.removeAds",
-    "name": "Remove ads",
-    "description": "Experimental source definition for pre-roll, mid-roll, and live-match ads. Exact target/version and runtime verification pending; inclusion in the published bundle is unconfirmed.",
-    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
-    "options": [],
-    "sourceOnly": true
-  },
-  {
-    "id": "app.rj.hotstar.patches.enableScreenMirroring",
-    "name": "Enable screen mirroring",
-    "description": "Experimental source definition for playback during screen mirroring or HDMI output. Runtime verification and release inclusion are unconfirmed.",
-    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
-    "options": [],
-    "sourceOnly": true
-  },
-  {
-    "id": "app.rj.hotstar.patches.enableAllCodecs",
-    "name": "Enable all codecs",
-    "description": "Experimental source definition for codec and resolution capability checks. Runtime verification and release inclusion are unconfirmed.",
-    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
-    "options": [],
-    "sourceOnly": true
-  },
-  {
-    "id": "app.rj.hotstar.patches.forceHdr10",
-    "name": "Force HDR10",
-    "description": "Experimental source definition for HDR capability checks. Device support, runtime behavior, and release inclusion are unconfirmed.",
-    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
-    "options": [],
-    "sourceOnly": true
-  },
-  {
-    "id": "app.rj.hotstar.patches.unlockPremium",
-    "name": "Unlock premium",
-    "description": "Source-only experimental definition. The repository says inclusion in the published bundle and runtime behavior are not confirmed.",
-    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
-    "options": [],
-    "sourceOnly": true
-  },
-  {
-    "id": "app.rj.hotstar.patches.enableScreenshots",
-    "name": "Enable screenshots",
-    "description": "Experimental source definition for screenshot and screen-recording restrictions. Runtime verification and release inclusion are unconfirmed.",
-    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
-    "options": [],
-    "sourceOnly": true
-  },
-  {
-    "id": "app.rj.hotstar.patches.bypassSignatureCheck",
-    "name": "Bypass signature check",
-    "description": "Source-only experimental definition for app-signature verification. The repository does not confirm it is a verified or supported release feature.",
-    "apps": [{ "package": "in.startv.hotstar", "versions": [] }],
-    "options": [],
-    "sourceOnly": true
-  },
-  {
-    "id": "app.rj.hyperlock.patches.removeAds",
-    "name": "Remove ads",
-    "description": "Removes HyperLock 0.1.2 banner, native, interstitial, and app-open ads while preserving Play Store validation and purchase/entitlement checks.",
-    "apps": [
-      {
-        "package": "com.appiolab.hyperlockscreenos",
-        "versions": [
-          "0.1.2"
-        ]
-      }
-    ],
-    "options": []
-  },
-  {
-    "id": "app.rj.hyperlock.patches.unlockPremium",
-    "name": "Unlock premium",
-    "description": "Unlocks PRO/VIP lock screen styles, custom fonts, wallpapers, and AOD features in HyperLock Screen & AOD 0.1.2.",
-    "apps": [{ "package": "com.appiolab.hyperlockscreenos", "versions": ["0.1.2"] }],
-    "options": []
-  },
-  {
-    "id": "app.rj.hyperlock.patches.bypassLicenseCheck",
-    "name": "Bypass license check",
-    "description": "Source-only experimental definition for installer/license validation. It is not a verified or supported release feature.",
-    "apps": [{ "package": "com.appiolab.hyperlockscreenos", "versions": ["0.1.2"] }],
-    "options": [],
-    "sourceOnly": true
-  },
-  {
-    "id": "app.rj.pinterest.patches.removeAdvertisingIdPermission",
-    "name": "Remove Advertising ID permission",
-    "description": "Removes the Google Advertising ID permission from Pinterest 14.42.0.",
-    "apps": [
-      {
-        "package": "com.pinterest",
-        "versions": [
-          "14.42.0"
-        ]
-      }
-    ],
-    "options": []
-  },
-  {
-    "id": "app.rj.pinterest.patches.optOutGoogleAnalytics",
-    "name": "Opt out of Google Analytics",
-    "description": "Sets Pinterest's four Google Analytics default-consent flags to false.",
-    "apps": [
-      {
-        "package": "com.pinterest",
-        "versions": [
-          "14.42.0"
-        ]
-      }
-    ],
-    "options": []
-  },
-  {
-    "id": "app.rj.pinterest.patches.disablePrivacySandboxAdServices",
-    "name": "Disable Privacy Sandbox Ad Services",
-    "description": "Removes Pinterest's android.adservices.AD_SERVICES_CONFIG manifest property.",
-    "apps": [
-      {
-        "package": "com.pinterest",
-        "versions": [
-          "14.42.0"
-        ]
-      }
-    ],
-    "options": []
-  },
-  {
-    "id": "app.rj.pinterest.patches.disableGoogleEngageReceiver",
-    "name": "Disable Google Engage receiver",
-    "description": "Disables Pinterest's Google Engage recommendation broadcast receiver.",
-    "apps": [
-      {
-        "package": "com.pinterest",
-        "versions": [
-          "14.42.0"
-        ]
-      }
-    ],
-    "options": []
-  }
-];
+  const rjPatchSpecs = rjIndex.patches;
   const rjPatches = rjPatchSpecs.map((patch) => ({
     ...patch,
     bundle: "rj-reseam-patches",
@@ -663,10 +552,10 @@ async function buildCatalogOnce() {
   };
 
   const rjBundle = {
-    name: "rj-reseam-patches",
-    author: "RJ",
-    description: "RJ community patches for Advanced Download Manager, Anixart, JioHotstar, HyperLock Screen & AOD, and Pinterest. Some entries are experimental source definitions and are not confirmed in the latest published .reseam bundle.",
-    homepage: rjSourceUrl,
+    name: rjIndex.bundle.name || "rj-reseam-patches",
+    author: rjIndex.bundle.author || "RJ",
+    description: rjIndex.bundle.description || "RJ community patches from the latest published Reseam bundle.",
+    homepage: rjIndex.bundle.homepage || rjSourceUrl,
     url: rjSourceUrl,
     indexUrl: rjSourceUrl,
     addUrl: rjAddUrl,
